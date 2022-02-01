@@ -29,9 +29,30 @@ async def on_ready():
 
 @bot.slash_command()
 async def reminders(interaction):
-	msgtext = "CURRENT REMINDERS\t\tPTY"
+	cursor = await getReminders(-1)
+	msgtext = "```CURRENT REMINDERS\t\t\tPTY\t\tSORT: ALL\n"
+	count = 1
+	for item in cursor:
+		if not count - 1:
+			msgtext += " >> "
+		msgtext += str(count) + ". " + item[0] # + "\t\t" + str(item[1])
+		if not count - 1:
+			for i in range(1, math.floor((30 - len(item[0])) / 4)):
+				msgtext += "\t"
+		else:
+			for i in range(0, math.floor((30 - len(item[0])) / 4)):
+				msgtext += "\t"
+		if not item[1]:
+			msgtext += "LP"
+		elif item[1]:
+			msgtext += "HP"
+		if not count - 1:
+			msgtext += " << "
+		msgtext += "\n"
+		count += 1
+	msgtext += "```"
 	msg = await interaction.send(msgtext)
-	vw = reminderView()
+	vw = reminderView(bot, await interaction.original_message())
 	await interaction.edit_original_message(view=vw)
 
 bot.run(TOKEN)
