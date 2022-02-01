@@ -35,7 +35,7 @@ async def reminders(interaction):
 	for item in cursor:
 		if not count - 1:
 			msgtext += " >> "
-		msgtext += str(count) + ". " + item[0] # + "\t\t" + str(item[1])
+		msgtext += str(count) + ". " + item[0]
 		if not count - 1:
 			for i in range(1, math.floor((30 - len(item[0])) / 4)):
 				msgtext += "\t"
@@ -52,7 +52,7 @@ async def reminders(interaction):
 		count += 1
 	msgtext += "```"
 	msg = await interaction.send(msgtext)
-	vw = reminderView(bot, await interaction.original_message())
+	vw = reminderView(bot, await interaction.original_message(), interaction.user)
 	await interaction.edit_original_message(view=vw)
 
 bot.run(TOKEN)
