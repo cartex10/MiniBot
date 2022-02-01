@@ -20,11 +20,12 @@ class Timer:
 		self._task.cancel()
 
 class reminderView(discord.ui.View):
-	def __init__(self, bot, msg):
+	def __init__(self, bot, msg, user):
 		super().__init__()
 		self.sort = -1
 		self.bot = bot 
 		self.msg = msg
+		self.user = user
 		self.selected = 0
 	async def update(self):
 		cursor = await getReminders(self.sort)
@@ -62,7 +63,50 @@ class reminderView(discord.ui.View):
 		if self.sort > 1:
 			self.sort = -1
 		await self.update()
-		
+	@discord.ui.button(label='ADD LP', style=discord.ButtonStyle.primary)
+	async def addLP(self, button: discord.ui.Button, interaction: discord.Interaction):
+		text = "Respond with the new reminder\n"
+		text += "Send 'CANCEL' to create nothing"
+		await self.msg.edit(self.msg.content + text)
+		def check(m):
+			return m.channel == self.msg.channel and m.author == self.user
+		try:
+			msg = await self.bot.wait_for('message', check=check, timeout=120)
+		except asyncio.TimeoutError:
+			await self.update()
+			await self.msg.edit(self.msg.content + "You ran out of time to create the inventory, try again")
+		else:
+			content = msg.content
+			await msg.delete()
+			if content != "CANCEL":
+				await addReminder(content, 0)
+				await self.update()
+				await self.msg.edit(self.msg.content + "Added Reminder")
+			else:
+				await self.update()
+				await self.msg.edit(self.msg.content + "Cancelling...")
+	@discord.ui.button(label='ADD HP', style=discord.ButtonStyle.primary)			
+	async def addHP(self, button: discord.ui.Button, interaction: discord.Interaction):
+		text = "Respond with the new reminder\n"
+		text += "Send 'CANCEL' to create nothing"
+		await self.msg.edit(self.msg.content + text)
+		def check(m):
+			return m.channel == self.msg.channel and m.author == self.user
+		try:
+			msg = await self.bot.wait_for('message', check=check, timeout=120)
+		except asyncio.TimeoutError:
+			await self.update()
+			await self.msg.edit(self.msg.content + "You ran out of time to create the inventory, try again")
+		else:
+			content = msg.content
+			await msg.delete()
+			if content != "CANCEL":
+				await addReminder(content, 1)
+				await self.update()
+				await self.msg.edit(self.msg.content + "Added Reminder")
+			else:
+				await self.update()
+				await self.msg.edit(self.msg.content + "Cancelling...")
 
 # Timers
 async def start_timer(args):
