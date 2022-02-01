@@ -27,4 +27,11 @@ async def on_ready():
 		await checkConnection(chan)
 		timer = Timer(globalTime, start_timer, args={'chan':chan})
 
+@bot.slash_command()
+async def reminders(interaction):
+	msgtext = "CURRENT REMINDERS\t\tPTY"
+	msg = await interaction.send(msgtext)
+	vw = reminderView()
+	await interaction.edit_original_message(view=vw)
+
 bot.run(TOKEN)
