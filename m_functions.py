@@ -20,15 +20,17 @@ class Timer:
 		self._task.cancel()
 
 class reminderView(discord.ui.View):
-	def __init__(self, bot, msg, user):
+	def __init__(self, bot, msg, user, reminders):
 		super().__init__()
 		self.sort = -1
 		self.bot = bot 
 		self.msg = msg
 		self.user = user
 		self.selected = 0
+		self.reminders = reminders
 	async def update(self):
-		cursor = await getReminders(self.sort)
+		global con
+		self.reminders = await getReminders(self.sort)
 		msgtext = "```CURRENT REMINDERS\t\t\tPTY\t\tSORT: "
 		if self.sort == -1:
 			msgtext += "ALL\n"
@@ -37,7 +39,7 @@ class reminderView(discord.ui.View):
 		elif self.sort == 1:
 			msgtext += "HP\n"
 		count = 1
-		for item in cursor:
+		for item in self.reminders:
 			if self.selected == count - 1:
 				msgtext += " >> "
 			msgtext += str(count) + ". " + item[0] # + "\t\t" + str(item[1])
@@ -45,8 +47,10 @@ class reminderView(discord.ui.View):
 				for i in range(1, math.floor((30 - len(item[0])) / 4)):
 					msgtext += "\t"
 			else:
-				for i in range(0, math.floor((30 - len(item[0])) / 4)):
+				for i in range(1, math.floor((30 - len(item[0])) / 4)):
 					msgtext += "\t"
+				for i in range(-1, (30 - len(item[0])) % 4):
+					msgtext += " "	
 			if not item[1]:
 				msgtext += "LP"
 			elif item[1]:
@@ -107,6 +111,19 @@ class reminderView(discord.ui.View):
 			else:
 				await self.update()
 				await self.msg.edit(self.msg.content + "Cancelling...")
+	@discord.ui.button(label='Up', style=discord.ButtonStyle.secondary, row=2)
+	async def up(self, button: discord.ui.Button, interaction: discord.Interaction):
+		if self.selected <= 0:
+			self.selected = await countReminders(self.sort)
+		self.selected -= 1
+		await self.msg.channel.send("Selected: " + str(self.selected) + "\nlen: " + str(len(self.reminders.fetchall())))
+		await self.update()
+	@discord.ui.button(label='Down', style=discord.ButtonStyle.secondary, row=2)
+	async def down(self, button: discord.ui.Button, interaction: discord.Interaction):
+		if self.selected >=  await countReminders(self.sort) - 1:
+			self.selected = -1
+		self.selected += 1
+		await self.update()
 
 # Timers
 async def start_timer(args):
@@ -151,3 +168,11 @@ async def addReminder(title, priority):
 	global con
 	con.execute("INSERT INTO REMINDERS VALUES (?, ?) ", (title, bool(priority)))
 	con.commit()
+
+async def countReminders(priority):
+	global con
+	if priority < 0:
+		cursor = con.execute("SELECT COUNT(*) FROM REMINDERS")
+	else:
+		cursor = con.execute("SELECT COUNT(*) FROM REMINDERS WHERE priority=?", (priority,))
+	return int(cursor.fetchall()[0][0])
