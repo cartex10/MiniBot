@@ -7,7 +7,8 @@ from m_vars import *
 
 print("Starting bot with discord.py v" + discord.__version__)
 load_dotenv()
-TOKEN = os.getenv('TOKEN')														#Actual bot token
+# TOKEN = os.getenv('TOKEN')														#Actual bot token
+TOKEN = os.getenv('TEST_TOKEN')
 GUILD = int(os.getenv('GUILD'))
 
 base_activity = discord.Activity(type=discord.ActivityType.listening, name="!help")

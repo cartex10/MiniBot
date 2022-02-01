@@ -1,7 +1,7 @@
 import asyncio, sqlite3
 import nextcord as discord
 from nextcord.ext import commands
-import random, math
+import random, math, requests, json
 from m_vars import *
 
 # Classes
@@ -132,8 +132,14 @@ class reminderView(discord.ui.View):
 				await self.msg.edit(self.msg.content + "Cancelling...")
 # Timers
 async def start_timer(args):
+	global timerCount
+	global maxTimers
 	chan = args["chan"]
 	await notify(chan)
+	if timerCount == maxTimers:
+		timerCount = -1
+		await mangaCheck(chan)
+	timerCount += 1
 
 async def notify(chan):
 	# On Alarm, check if a reminder should be sent
@@ -143,8 +149,9 @@ async def notify(chan):
 	global timeNoLuck
 	if random.random() <= lowerFreq:
 		reminders = await getReminders(False)
-		await chan.send(random.choice(reminders)[0])
-		timeNoLuck = 0
+		if len(reminders) > 0:
+			await chan.send(random.choice(reminders)[0])
+			timeNoLuck = 0
 	else:
 		timeNoLuck += globalTime
 	if timeNoLuck >= maxTimers * globalTime:
@@ -153,6 +160,15 @@ async def notify(chan):
 		timeNoLuck = 0
 	timer = Timer(globalTime, start_timer, args={'chan':chan})
 
+async def mangaCheck(chan):
+	# On "maxTimers"th alarm, check for manga updates
+	# Get list of manga from mangadex custom list
+	response = requests.get("https://api.mangadex.org/list/bd404ab5-d07c-4dfc-b9ba-40e305e7fa47")
+	mangaList = []
+	temp = response.json().get("data").get("relationships")
+	for i in temp:
+		mangaList.append(i.get("id"))
+
 # Database Functions
 async def checkConnection(chan):
 	global con
@@ -160,10 +176,15 @@ async def checkConnection(chan):
 	con = sqlite3.connect("m_db.db")
 	try:
 		cursor = con.execute("SELECT title, priority FROM REMINDERS")
-		await chan.send("```Connection successful!```")
 	except:
 		await chan.send("```Creating REMINDERS table```")
 		cursor = con.execute("CREATE TABLE REMINDERS (title TEXT PRIMARY KEY NOT NULL, priority BOOL NOT NULL);")
+	try:
+		cursor = con.execute("SELECT mangaID, chapterNUM FROM MANGA")
+	except:
+		await chan.send("```Creating MANGA table```")
+		cursor = con.execute("CREATE TABLE MANGA (mangaID TEXT PRIMARY KEY NOT NULL, chapterNUM TEXT NOT NULL);")
+	await chan.send("```Connection successful!```")
 
 async def getReminders(priority):
 	global con
@@ -190,3 +211,31 @@ async def deleteReminder(title, priority):
 	global con
 	con.execute("DELETE FROM REMINDERS WHERE title=? AND priority=?", (title, priority))
 	con.commit()
+
+async def addManga(mangaID, chapterNUM):
+	global con
+	con.execute("INSERT INTO MANGA VALUES (?, ?)", (mangaID, chapterNUM))
+	con.commit()
+
+async def removeManga(mangaID):
+	global con
+	con.execute("DELETE FROM MANGA WHERE mangaID=?", (mangaID,))
+	con.commit()
+
+async def findManga(mangaID):
+	global con
+	cursor = con.execute("SELECT chapterNUM FROM MANGA WHERE mangaID=?", (mangaID,))
+	return cursor.fetchall()
+
+async def editManga(mangaID, chapterNUM):
+	global con
+	cursor = con.execute("UPDATE MANGA SET chapterNUM=? WHERE mangaID=?", (chapterNUM, mangaID))
+	con.commit()
+
+async def getManga():
+	global con
+	cursor = con.execute("SELECT mangaID FROM MANGA")
+	out = []
+	for manga in cursor.fetchall():
+		out.append(manga[0])
+	return out
