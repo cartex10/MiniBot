@@ -8,6 +8,7 @@ from m_vars import *
 print("Starting bot with discord.py v" + discord.__version__)
 load_dotenv()
 TOKEN = os.getenv('TOKEN')														#Actual bot token
+GUILD = int(os.getenv('GUILD'))
 
 base_activity = discord.Activity(type=discord.ActivityType.listening, name="!help")
 intents = discord.Intents.default()
@@ -18,8 +19,7 @@ async def on_ready():
 	global on_check
 	if on_check is not True:
 		on_check = True
-		guild_id = 710657083246379120
-		guild = bot.get_guild(guild_id)
+		guild = bot.get_guild(GUILD)
 		chan = discord.utils.get(guild.text_channels, name="general")
 		await bot.change_presence(activity=base_activity, status="online")
 		await chan.send("```Awaking MiniBot!```")
