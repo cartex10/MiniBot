@@ -31,7 +31,7 @@ class reminderView(discord.ui.View):
 	async def update(self):
 		global con
 		self.reminders = await getReminders(self.sort)
-		msgtext = "```CURRENT REMINDERS\t\t\tPTY\t\tSORT: "
+		msgtext = "```CURRENT REMINDERS\t\t\tPRTY\t\tSORT: "
 		if self.sort == -1:
 			msgtext += "ALL\n"
 		elif self.sort == 0:
@@ -133,20 +133,24 @@ class reminderView(discord.ui.View):
 # Timers
 async def start_timer(args):
 	chan = args["chan"]
-	await timesUp(chan)
+	await notify(chan)
 
-async def timesUp(chan):
+async def notify(chan):
+	# On Alarm, check if a reminder should be sent
 	global lowerFreq
-	global higherTime
+	global maxTimers
 	global globalTime
+	global timeNoLuck
 	if random.random() <= lowerFreq:
-		rems = await getReminders(False)
+		reminders = await getReminders(False)
+		await chan.send(random.choice(reminders)[0])
+		timeNoLuck = 0
 	else:
-		rems = await getReminders(True)
-	groupage = []
-	for item in rems:
-		groupage.append(item[0])
-	await chan.send(random.choice(groupage))
+		timeNoLuck += globalTime
+	if timeNoLuck >= maxTimers * globalTime:
+		reminders = await getReminders(True)
+		await chan.send(random.choice(reminders)[0])
+		timeNoLuck = 0
 	timer = Timer(globalTime, start_timer, args={'chan':chan})
 
 # Database Functions

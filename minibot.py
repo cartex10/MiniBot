@@ -31,7 +31,7 @@ async def on_ready():
 async def reminders(interaction):
 	global con
 	cursor = await getReminders(-1)
-	msgtext = "```CURRENT REMINDERS\t\t\tPTY\t\tSORT: ALL\n"
+	msgtext = "```CURRENT REMINDERS\t\t\tPRTY\t\tSORT: ALL\n"
 	count = 1
 	for item in cursor:
 		if not count - 1:
