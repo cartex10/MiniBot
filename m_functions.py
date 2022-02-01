@@ -1,4 +1,4 @@
-import asyncio
+import asyncio, sqlite3
 import nextcord as discord
 from nextcord.ext import commands
 import random
@@ -20,8 +20,6 @@ class Timer:
 
 async def start_timer(args):
 	chan = args["chan"]
-	#await chan.send("```Awaking MiniBot!```")
-	#await chan.send("Hello! I'm getting ready to help you out!")
 	await timesUp(chan)
 
 async def timesUp(chan):
@@ -34,3 +32,13 @@ async def timesUp(chan):
 		await chan.send("Higher")
 
 	timer = Timer(globalTime, start_timer, args={'chan':chan})
+
+async def checkConnection(chan):
+	await chan.send("```Attempting database connection```")
+	con = sqlite3.connect("m_db.db")
+	try:
+		cursor = con.execute("SELECT userID, guild, title, priority FROM REMINDERS")
+		await chan.send("```Connection successful!```")
+	except:
+		await chan.send("```Creating REMINDERS table```")
+		cursor = con.execute("CREATE TABLE REMINDERS (userID INT PRIMARY KEY NOT NULL, guild INT NOT NULL, title TEXT NOT NULL, priority BOOL NOT NULL);")

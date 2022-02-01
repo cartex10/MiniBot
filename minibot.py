@@ -22,7 +22,9 @@ async def on_ready():
 		guild = bot.get_guild(guild_id)
 		chan = discord.utils.get(guild.text_channels, name="general")
 		await bot.change_presence(activity=base_activity, status="online")
-		await chan.send("Hello")
+		await chan.send("```Awaking MiniBot!```")
+		await chan.send("Hello! I'm getting ready to help you out!")
+		await checkConnection(chan)
 		timer = Timer(globalTime, start_timer, args={'chan':chan})
 
 bot.run(TOKEN)
