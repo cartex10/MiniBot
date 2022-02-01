@@ -18,6 +18,22 @@ class Timer:
 	def cancel(self):
 		self._task.cancel()
 
+class reminderView(discord.ui.View):
+	def __init__(self):
+		super().__init__()
+		self.sort = 0
+	@discord.ui.button(label='SORT', style=discord.ButtonStyle.secondary)
+	async def sort(self, button: discord.ui.Button, interaction: discord.Interaction):
+		self.sort += 1
+		if self.sort > 2:
+			self.sort = 0
+		if self.sort is 0:
+				print(self.sort)
+		elif self.sort is 1:
+				print(self.sort)
+		elif self.sort is 2:
+				print(self.sort)
+
 async def start_timer(args):
 	chan = args["chan"]
 	await timesUp(chan)
