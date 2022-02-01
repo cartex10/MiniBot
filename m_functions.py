@@ -63,11 +63,12 @@ class reminderView(discord.ui.View):
 		await self.msg.edit(msgtext)
 	@discord.ui.button(label='SORT', style=discord.ButtonStyle.secondary)
 	async def sort(self, button: discord.ui.Button, interaction: discord.Interaction):
+		self.selected = 0
 		self.sort += 1
 		if self.sort > 1:
 			self.sort = -1
 		await self.update()
-	@discord.ui.button(label='ADD LP', style=discord.ButtonStyle.primary)
+	@discord.ui.button(label='Add LP', style=discord.ButtonStyle.primary)
 	async def addLP(self, button: discord.ui.Button, interaction: discord.Interaction):
 		text = "Respond with the new reminder\n"
 		text += "Send 'CANCEL' to create nothing"
@@ -89,7 +90,7 @@ class reminderView(discord.ui.View):
 			else:
 				await self.update()
 				await self.msg.edit(self.msg.content + "Cancelling...")
-	@discord.ui.button(label='ADD HP', style=discord.ButtonStyle.primary)			
+	@discord.ui.button(label='Add HP', style=discord.ButtonStyle.primary)			
 	async def addHP(self, button: discord.ui.Button, interaction: discord.Interaction):
 		text = "Respond with the new reminder\n"
 		text += "Send 'CANCEL' to create nothing"
@@ -116,7 +117,6 @@ class reminderView(discord.ui.View):
 		if self.selected <= 0:
 			self.selected = await countReminders(self.sort)
 		self.selected -= 1
-		await self.msg.channel.send("Selected: " + str(self.selected) + "\nlen: " + str(len(self.reminders.fetchall())))
 		await self.update()
 	@discord.ui.button(label='Down', style=discord.ButtonStyle.secondary, row=2)
 	async def down(self, button: discord.ui.Button, interaction: discord.Interaction):
@@ -124,7 +124,12 @@ class reminderView(discord.ui.View):
 			self.selected = -1
 		self.selected += 1
 		await self.update()
-
+	@discord.ui.button(label='Delete', style=discord.ButtonStyle.secondary, row=2)
+	async def delete(self, button: discord.ui.Button, interaction: discord.Interaction):
+		toDel = self.reminders[self.selected]
+		await deleteReminder(toDel[0], toDel[1])
+		await self.update()
+		await self.msg.edit(self.msg.content + "Reminder deleted!")
 # Timers
 async def start_timer(args):
 	chan = args["chan"]
@@ -162,7 +167,7 @@ async def getReminders(priority):
 		cursor = con.execute("SELECT title, priority FROM REMINDERS")
 	else:
 		cursor = con.execute("SELECT title, priority FROM REMINDERS WHERE priority=?", (bool(priority),))
-	return cursor
+	return cursor.fetchall()
 
 async def addReminder(title, priority):
 	global con
@@ -176,3 +181,8 @@ async def countReminders(priority):
 	else:
 		cursor = con.execute("SELECT COUNT(*) FROM REMINDERS WHERE priority=?", (priority,))
 	return int(cursor.fetchall()[0][0])
+
+async def deleteReminder(title, priority):
+	global con
+	con.execute("DELETE FROM REMINDERS WHERE title=? AND priority=?", (title, priority))
+	con.commit()
