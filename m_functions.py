@@ -61,14 +61,32 @@ class reminderView(discord.ui.View):
 			count += 1
 		msgtext += "```"
 		await self.msg.edit(msgtext)
-	@discord.ui.button(label='SORT', style=discord.ButtonStyle.secondary)
+	@discord.ui.button(label='ᐱ', style=discord.ButtonStyle.secondary)
+	async def up(self, button: discord.ui.Button, interaction: discord.Interaction):
+		if self.selected <= 0:
+			self.selected = await countReminders(self.sort)
+		self.selected -= 1
+		await self.update()
+	@discord.ui.button(label='SORT', style=discord.ButtonStyle.success)
 	async def sort(self, button: discord.ui.Button, interaction: discord.Interaction):
 		self.selected = 0
 		self.sort += 1
 		if self.sort > 1:
 			self.sort = -1
 		await self.update()
-	@discord.ui.button(label='Add LP', style=discord.ButtonStyle.primary)
+	@discord.ui.button(label='Delete', style=discord.ButtonStyle.danger)
+	async def delete(self, button: discord.ui.Button, interaction: discord.Interaction):
+		toDel = self.reminders[self.selected]
+		await deleteReminder(toDel[0], toDel[1])
+		await self.update()
+		await self.msg.edit(self.msg.content + "Reminder deleted!")
+	@discord.ui.button(label='ᐯ', style=discord.ButtonStyle.secondary, row=2)
+	async def down(self, button: discord.ui.Button, interaction: discord.Interaction):
+		if self.selected >=  await countReminders(self.sort) - 1:
+			self.selected = -1
+		self.selected += 1
+		await self.update()
+	@discord.ui.button(label='Add LP', style=discord.ButtonStyle.primary, row=2)
 	async def addLP(self, button: discord.ui.Button, interaction: discord.Interaction):
 		text = "Respond with the new reminder\n"
 		text += "Send 'CANCEL' to create nothing"
@@ -90,7 +108,7 @@ class reminderView(discord.ui.View):
 			else:
 				await self.update()
 				await self.msg.edit(self.msg.content + "Cancelling...")
-	@discord.ui.button(label='Add HP', style=discord.ButtonStyle.primary)			
+	@discord.ui.button(label='Add HP', style=discord.ButtonStyle.primary, row=2)			
 	async def addHP(self, button: discord.ui.Button, interaction: discord.Interaction):
 		text = "Respond with the new reminder\n"
 		text += "Send 'CANCEL' to create nothing"
@@ -112,24 +130,6 @@ class reminderView(discord.ui.View):
 			else:
 				await self.update()
 				await self.msg.edit(self.msg.content + "Cancelling...")
-	@discord.ui.button(label='Up', style=discord.ButtonStyle.secondary, row=2)
-	async def up(self, button: discord.ui.Button, interaction: discord.Interaction):
-		if self.selected <= 0:
-			self.selected = await countReminders(self.sort)
-		self.selected -= 1
-		await self.update()
-	@discord.ui.button(label='Down', style=discord.ButtonStyle.secondary, row=2)
-	async def down(self, button: discord.ui.Button, interaction: discord.Interaction):
-		if self.selected >=  await countReminders(self.sort) - 1:
-			self.selected = -1
-		self.selected += 1
-		await self.update()
-	@discord.ui.button(label='Delete', style=discord.ButtonStyle.secondary, row=2)
-	async def delete(self, button: discord.ui.Button, interaction: discord.Interaction):
-		toDel = self.reminders[self.selected]
-		await deleteReminder(toDel[0], toDel[1])
-		await self.update()
-		await self.msg.edit(self.msg.content + "Reminder deleted!")
 # Timers
 async def start_timer(args):
 	chan = args["chan"]
