@@ -118,10 +118,13 @@ async def timesUp(chan):
 	global higherTime
 	global globalTime
 	if random.random() <= lowerFreq:
-		await chan.send("Lower")
+		rems = await getReminders(False)
 	else:
-		await chan.send("Higher")
-
+		rems = await getReminders(True)
+	groupage = []
+	for item in rems:
+		groupage.append(item[0])
+	await chan.send(random.choice(groupage))
 	timer = Timer(globalTime, start_timer, args={'chan':chan})
 
 # Database Functions
