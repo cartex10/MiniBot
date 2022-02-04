@@ -1,7 +1,6 @@
-import asyncio, sqlite3
 import nextcord as discord
 from nextcord.ext import commands
-import random, math, requests, json
+import asyncio, sqlite3, random, math, requests, json
 from m_vars import *
 
 # Classes
@@ -130,6 +129,7 @@ class reminderView(discord.ui.View):
 			else:
 				await self.update()
 				await self.msg.edit(self.msg.content + "Cancelling...")
+
 # Timers
 async def start_timer(args):
 	global timerCount
@@ -164,10 +164,35 @@ async def mangaCheck(chan):
 	# On "maxTimers"th alarm, check for manga updates
 	# Get list of manga from mangadex custom list
 	response = requests.get("https://api.mangadex.org/list/bd404ab5-d07c-4dfc-b9ba-40e305e7fa47")
-	mangaList = []
+	mangaIDs = ["28e35701-de99-4f42-bd2c-2e9f9e43fe4e"]
+	prevChap = "9"
 	temp = response.json().get("data").get("relationships")
 	for i in temp:
-		mangaList.append(i.get("id"))
+		pass # mangaIDs.append(i.get("id"))
+	# Compare newest manga to database
+	for i in mangaIDs:
+		result = await findManga(i)
+		if result == -1:
+			await addManga(i, await getNewestChapter(i))
+		else:
+			if await getNewestChapter(i) != result:
+				out = await getMangaInfo(i)
+				await chan.send(out.get("title") + " has been updated!")
+
+async def getNewestChapter(mangaID):
+	response = requests.get("https://api.mangadex.org/manga/" + mangaID + "/aggregate")
+	respo = response.json().get("volumes")
+	vols = list(respo)
+	try:
+		chaps = list(respo.get("none").get("chapters").keys())
+	except:
+		chaps = list(respo.get(vols[1]).get("chapters").keys())
+	return chaps[0]
+
+async def getMangaInfo(mangaID):
+	resp = requests.get("https://api.mangadex.org/manga/" + mangaID)
+	title = list(resp.json().get("data").get("attributes").get("title").values())[0]
+	return {"title": title}
 
 # Database Functions
 async def checkConnection(chan):
@@ -224,8 +249,11 @@ async def removeManga(mangaID):
 
 async def findManga(mangaID):
 	global con
+	out = -1
 	cursor = con.execute("SELECT chapterNUM FROM MANGA WHERE mangaID=?", (mangaID,))
-	return cursor.fetchall()
+	for manga in cursor.fetchall():
+		out = manga
+	return out
 
 async def editManga(mangaID, chapterNUM):
 	global con
