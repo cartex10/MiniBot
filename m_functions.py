@@ -164,26 +164,31 @@ async def mangaCheck(chan):
 	# On "maxTimers"th alarm, check for manga updates
 	# Get list of manga from mangadex custom list
 	response = requests.get("https://api.mangadex.org/list/bd404ab5-d07c-4dfc-b9ba-40e305e7fa47")
-	mangaIDs = ["28e35701-de99-4f42-bd2c-2e9f9e43fe4e"]
-	prevChap = "9"
+	mangaIDs = []
 	temp = response.json().get("data").get("relationships")
 	for i in temp:
-		pass # mangaIDs.append(i.get("id"))
+		if response.json().get("result") == "ok":
+			mangaIDs.append(i.get("id"))
 	# Compare newest manga to database
 	for i in mangaIDs:
+		inf = await getMangaInfo(i)
+		if inf.get("errFlag"):
+			continue
 		result = await findManga(i)
 		if result == -1:
+			# If manga is not in database
 			await addManga(i, await getNewestChapter(i))
+		elif result == "err":
+			continue
 		else:
 			newChap = await getNewestChapter(i)
 			if newChap != result:
-				out = await getMangaInfo(i)
-				await chan.send(out.get("title") + " has been updated!")
+				# If manga in database has been updated
+				await chan.send(inf.get("title") + " has been updated!")
 				await editManga(i, newChap)
-			else:
-				await chan.send("no")
 
 async def getNewestChapter(mangaID):
+	print((await getMangaInfo(mangaID)).get("title"))
 	response = requests.get("https://api.mangadex.org/manga/" + mangaID + "/aggregate")
 	respo = response.json().get("volumes")
 	vols = list(respo)
@@ -195,8 +200,10 @@ async def getNewestChapter(mangaID):
 
 async def getMangaInfo(mangaID):
 	resp = requests.get("https://api.mangadex.org/manga/" + mangaID)
+	if resp.json().get("result") != "ok":
+		return {"title": "", "errFlag": True}
 	title = list(resp.json().get("data").get("attributes").get("title").values())[0]
-	return {"title": title}
+	return {"title": title, "errFlag": False}
 
 # Database Functions
 async def checkConnection(chan):
