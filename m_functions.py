@@ -209,6 +209,7 @@ async def getMangaInfo(mangaID):
 # Database Functions
 async def checkConnection(chan):
 	global con
+	global devmsg
 	await chan.send("```Attempting database connection```")
 	con = sqlite3.connect("m_db.db")
 	try:
