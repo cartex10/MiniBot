@@ -21,12 +21,16 @@ class Timer:
 class reminderView(discord.ui.View):
 	def __init__(self, bot, msg, user, reminders):
 		super().__init__()
-		self.sort = -1
 		self.bot = bot 
 		self.msg = msg
 		self.user = user
-		self.selected = 0
 		self.reminders = reminders
+		self.sort = -1
+		self.selected = 0
+		self.timeout = None
+	async def on_timeout(self):
+		await self.msg.delete()
+		self.stop()
 	async def update(self):
 		global con
 		self.reminders = await getReminders(self.sort)
@@ -72,6 +76,9 @@ class reminderView(discord.ui.View):
 		self.sort += 1
 		if self.sort > 1:
 			self.sort = -1
+		await self.update()
+	@discord.ui.button(label='REFRESH', style=discord.ButtonStyle.success)
+	async def redo(self, button: discord.ui.Button, interaction: discord.Interaction):
 		await self.update()
 	@discord.ui.button(label='Delete', style=discord.ButtonStyle.danger)
 	async def delete(self, button: discord.ui.Button, interaction: discord.Interaction):
