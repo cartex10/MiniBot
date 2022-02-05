@@ -131,38 +131,31 @@ class reminderView(discord.ui.View):
 				await self.msg.edit(self.msg.content + "Cancelling...")
 
 # Timers
-async def start_timer(args):
-	global timerCount
-	global maxTimers
-	chan = args["chan"]
-	await notify(chan)
-	if timerCount == maxTimers:
-		timerCount = -1
-		await mangaCheck(chan)
-	timerCount += 1
-
-async def notify(chan):
+async def notify_timer(args):
 	# On Alarm, check if a reminder should be sent
 	global lowerFreq
 	global maxTimers
-	global globalTime
+	global notifyTime
 	global timeNoLuck
+	chan = args["chan"]
 	if random.random() <= lowerFreq:
 		reminders = await getReminders(False)
 		if len(reminders) > 0:
 			await chan.send(random.choice(reminders)[0])
 			timeNoLuck = 0
 	else:
-		timeNoLuck += globalTime
-	if timeNoLuck >= maxTimers * globalTime:
+		timeNoLuck += notifyTime
+	if timeNoLuck >= maxTimers * notifyTime:
 		reminders = await getReminders(True)
 		await chan.send(random.choice(reminders)[0])
 		timeNoLuck = 0
-	timer = Timer(globalTime, start_timer, args={'chan':chan})
+	timer = Timer(notifyTime, notify_timer, args={'chan':chan})
 
-async def mangaCheck(chan):
+async def manga_timer(args):
 	# On "maxTimers"th alarm, check for manga updates
 	# Get list of manga from mangadex custom list
+	global mangaTime
+	chan = args["chan"]
 	response = requests.get("https://api.mangadex.org/list/bd404ab5-d07c-4dfc-b9ba-40e305e7fa47")
 	mangaIDs = []
 	temp = response.json().get("data").get("relationships")
@@ -186,6 +179,7 @@ async def mangaCheck(chan):
 				# If manga in database has been updated
 				await chan.send(inf.get("title") + " has been updated!")
 				await editManga(i, newChap)
+	timer = Timer(mangaTime, manga_timer, args={'chan':chan})
 
 async def getNewestChapter(mangaID):
 	print((await getMangaInfo(mangaID)).get("title"))

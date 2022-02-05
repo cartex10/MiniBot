@@ -7,8 +7,8 @@ from m_vars import *
 
 print("Starting bot with discord.py v" + discord.__version__)
 load_dotenv()
-# TOKEN = os.getenv('TOKEN')														#Actual bot token
-TOKEN = os.getenv('TEST_TOKEN')
+TOKEN = os.getenv('TOKEN')														#Actual bot token
+#TOKEN = os.getenv('TEST_TOKEN')
 GUILD = int(os.getenv('GUILD'))
 
 base_activity = discord.Activity(type=discord.ActivityType.listening, name="!help")
@@ -18,6 +18,8 @@ bot = commands.Bot(command_prefix="!", status="online", activity=base_activity)
 @bot.event																		#called at bot startup
 async def on_ready():
 	global on_check
+	global notifyTime
+	global mangaTime
 	if on_check is not True:
 		on_check = True
 		guild = bot.get_guild(GUILD)
@@ -26,7 +28,8 @@ async def on_ready():
 		await chan.send("```Awaking MiniBot!```")
 		await chan.send("Hello! I'm getting ready to help you out!")
 		await checkConnection(chan)
-		timer = Timer(globalTime, start_timer, args={'chan':chan})
+		n_timer = Timer(notifyTime, notify_timer, args={'chan':chan})
+		m_timer = Timer(mangaTime, manga_timer, args={'chan':chan})
 
 @bot.slash_command()
 async def reminders(interaction):
