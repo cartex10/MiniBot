@@ -175,9 +175,13 @@ async def mangaCheck(chan):
 		if result == -1:
 			await addManga(i, await getNewestChapter(i))
 		else:
-			if await getNewestChapter(i) != result:
+			newChap = await getNewestChapter(i)
+			if newChap != result:
 				out = await getMangaInfo(i)
 				await chan.send(out.get("title") + " has been updated!")
+				await editManga(i, newChap)
+			else:
+				await chan.send("no")
 
 async def getNewestChapter(mangaID):
 	response = requests.get("https://api.mangadex.org/manga/" + mangaID + "/aggregate")
@@ -252,7 +256,7 @@ async def findManga(mangaID):
 	out = -1
 	cursor = con.execute("SELECT chapterNUM FROM MANGA WHERE mangaID=?", (mangaID,))
 	for manga in cursor.fetchall():
-		out = manga
+		out = manga[0]
 	return out
 
 async def editManga(mangaID, chapterNUM):
