@@ -1,3 +1,8 @@
+# MiniBot v1.1
+#
+# TODO: instead of sending nothing, have the bot send a random personal message
+#
+#
 import nextcord as discord
 from nextcord.ext import commands
 from dotenv import load_dotenv
@@ -23,12 +28,13 @@ async def on_ready():
 	if on_check is not True:
 		on_check = True
 		guild = bot.get_guild(GUILD)
-		chan = discord.utils.get(guild.text_channels, name="general")
 		await bot.change_presence(activity=base_activity, status="online")
+		chan = discord.utils.get(guild.text_channels, name="general")
 		await chan.send("```Waking MiniBot!```")
 		await chan.send("Hello! I'm getting ready to help you out!")
 		await checkConnection(chan)
 		n_timer = Timer(notifyTime, notify_timer, args={'chan':chan})
+		chan = discord.utils.get(guild.text_channels, name="manga-updates")
 		m_timer = Timer(mangaTime, manga_timer, args={'chan':chan})
 
 @bot.slash_command()
