@@ -153,13 +153,15 @@ async def notify_timer(args):
 	if random.random() <= lowerFreq:
 		reminders = await getReminders(False)
 		if len(reminders) > 0:
-			await chan.send(random.choice(reminders)[0])
+			msgText = await getRandomMessage(textEnum.notification)
+			await chan.send(msgText.replace("***", random.choice(reminders)[0]))
 			timeNoLuck = 0
 	else:
 		timeNoLuck += notifyTime
 	if timeNoLuck >= maxTimers * notifyTime:
 		reminders = await getReminders(True)
-		await chan.send(random.choice(reminders)[0])
+		msgText = await getRandomMessage(textEnum.notification)
+		await chan.send(msgText.replace("***", random.choice(reminders)[0]))
 		timeNoLuck = 0
 	timer = Timer(notifyTime, notify_timer, args={'chan':chan})
 
@@ -296,7 +298,7 @@ async def addMessage(msgText, msgType, msgWeight):
 
 async def getRandomMessage(msgType):
 	global con
-	cursor = con.execute("SELECT msgText, msgWeight FROM MESSAGES WHERE msgType=?", (msgType,))
+	cursor = con.execute("SELECT msgText, msgWeight FROM MESSAGES WHERE msgType=?", (msgType.value,))
 	msgList = cursor.fetchall()
 	randList = []
 	count = 0
