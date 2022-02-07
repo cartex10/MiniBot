@@ -143,6 +143,7 @@ class textEnum(Enum):
 	manga = 3
 	#startup = 4
 	#greeting = 5
+	#status = 6
 
 # Timers
 async def notify_timer(args):
@@ -152,6 +153,7 @@ async def notify_timer(args):
 	global notifyTime
 	global timeNoLuck
 	global personalityOverride
+	global n_timer
 	chan = args["chan"]
 	if random.random() <= lowerFreq:
 		reminders = await getReminders(False)
@@ -170,13 +172,14 @@ async def notify_timer(args):
 		msgText = await getRandomMessage(textEnum.notification)
 		await chan.send(msgText.replace("***", random.choice(reminders)[0]))
 		timeNoLuck = 0
-	timer = Timer(notifyTime, notify_timer, args={'chan':chan})
+	n_timer = Timer(notifyTime, notify_timer, args={'chan':chan})
 
 async def manga_timer(args):
 	# On "maxTimers"th alarm, check for manga updates
-	# Get list of manga from mangadex custom list
 	global mangaTime
+	global m_timer
 	chan = args["chan"]
+	# Get list of manga from mangadex custom list
 	response = requests.get("https://api.mangadex.org/list/bd404ab5-d07c-4dfc-b9ba-40e305e7fa47")
 	mangaIDs = []
 	temp = response.json().get("data").get("relationships")
@@ -202,7 +205,7 @@ async def manga_timer(args):
 				embed = discord.Embed().set_image(url=info.get("cover"))
 				await chan.send(msgText.replace("***", info.get("title")), embed=embed)
 				await editManga(i, newChap)
-	timer = Timer(mangaTime, manga_timer, args={'chan':chan})
+	m_timer = Timer(mangaTime, manga_timer, args={'chan':chan})
 
 async def getNewestChapter(mangaID):
 	response = requests.get("https://api.mangadex.org/manga/" + mangaID + "/aggregate")
