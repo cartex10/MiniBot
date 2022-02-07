@@ -185,8 +185,8 @@ async def manga_timer(args):
 			mangaIDs.append(i.get("id"))
 	# Compare newest manga to database
 	for i in mangaIDs:
-		inf = await getMangaInfo(i)
-		if inf.get("errFlag"):
+		info = await getMangaInfo(i)
+		if info.get("errFlag"):
 			continue
 		result = await findManga(i)
 		if result == -1:
@@ -199,7 +199,8 @@ async def manga_timer(args):
 			if newChap != result:
 				# If manga in database has been updated
 				msgText = await getRandomMessage(textEnum.manga)
-				await chan.send(msgText.replace("***", inf.get("title")))
+				embed = discord.Embed().set_image(url=info.get("cover"))
+				await chan.send(msgText.replace("***", info.get("title")), embed=embed)
 				await editManga(i, newChap)
 	timer = Timer(mangaTime, manga_timer, args={'chan':chan})
 
@@ -216,9 +217,16 @@ async def getNewestChapter(mangaID):
 async def getMangaInfo(mangaID):
 	resp = requests.get("https://api.mangadex.org/manga/" + mangaID)
 	if resp.json().get("result") != "ok":
-		return {"title": "", "errFlag": True}
+		return {"errFlag": True}
 	title = list(resp.json().get("data").get("attributes").get("title").values())[0]
-	return {"title": title, "errFlag": False}
+	respo = resp.json().get("data").get("relationships")
+	cover = "https://uploads.mangadex.org/covers/" + mangaID
+	for i in respo:
+		if i.get("type") == "cover_art":
+			response = requests.get("https://api.mangadex.org/cover/" + i.get("id"))
+			cover += "/" + response.json().get("data").get("attributes").get("fileName")
+			break
+	return {"title": title, "cover": cover, "errFlag": False}
 
 # Database Functions
 async def checkConnection(chan):
