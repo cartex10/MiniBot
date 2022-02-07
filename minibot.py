@@ -78,7 +78,7 @@ async def messages(interaction):
 	try:
 		msg = await bot.wait_for('message', check=check, timeout=120)
 	except asyncio.TimeoutError:
-		await interaction.edit_original_message("You ran out of time, try again")
+		await interaction.edit_original_message(content="You ran out of time, try again")
 	else:
 		content = msg.content
 		await msg.delete()
@@ -89,18 +89,18 @@ async def messages(interaction):
 			try:
 				msg = await bot.wait_for('message', check=check, timeout=120)
 			except asyncio.TimeoutError:
-				await interaction.edit_original_message("You ran out of time, try again")
+				await interaction.edit_original_message(content="You ran out of time, try again")
 			else:
 				content = msg.content
 				await msg.delete()
 				if content != "CANCEL":
 					# get input 2
 					inp2 = content
-					await interaction.edit_original_message(content=text.replace("message type num\n1 - personality\n2 - notification\n3 - manga", "message weight int"))
+					await interaction.edit_original_message(content=text.replace("new message text", "message weight int, DEFAULT=100"))
 					try:
 						msg = await bot.wait_for('message', check=check, timeout=120)
 					except asyncio.TimeoutError:
-						await interaction.edit_original_message("You ran out of time, try again")
+						await interaction.edit_original_message(content="You ran out of time, try again")
 					else:
 						content = msg.content
 						await msg.delete()
@@ -109,16 +109,14 @@ async def messages(interaction):
 							inp3 = content
 							await interaction.edit_original_message(content="Adding message to database")
 							try:
-								print(inp1)
-								print(inp2)
-								print(inp3)
+								await addMessage(inp1, int(inp2), int(inp3))
 							except:
 								await interaction.edit_original_message(content="Error, try again")
 						else:
-							await interaction.edit_original_message("Cancelling...")
+							await interaction.edit_original_message(content="Cancelling...")
 				else:
-					await interaction.edit_original_message("Cancelling...")
+					await interaction.edit_original_message(content="Cancelling...")
 		else:
-			await interaction.edit_original_message("Cancelling...")
+			await interaction.edit_original_message(content="Cancelling...")
 
 bot.run(TOKEN)

@@ -137,7 +137,7 @@ class reminderView(discord.ui.View):
 				await self.update()
 				await self.msg.edit(self.msg.content + "Cancelling...")
 
-class temp(Enum):
+class textEnum(Enum):
 	personality = 1
 	notification = 2
 	manga = 3
@@ -288,3 +288,22 @@ async def getManga():
 	for manga in cursor.fetchall():
 		out.append(manga[0])
 	return out
+
+async def addMessage(msgText, msgType, msgWeight):
+	global con
+	con.execute("INSERT INTO MESSAGES VALUES (?, ?, ?)", (msgText, msgType, msgWeight))
+	con.commit()
+
+async def getRandomMessage(msgType):
+	global con
+	cursor = con.execute("SELECT msgText, msgWeight FROM MESSAGES WHERE msgType=?", (msgType,))
+	msgList = cursor.fetchall()
+	randList = []
+	count = 0
+	for msg in msgList:
+		for i in range(0, msg[1]):
+			randList.append(count)
+		count += 1
+	if len(randList) == 0:
+		return None
+	return msgList[random.choice(randList)][0]
