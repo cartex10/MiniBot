@@ -1,7 +1,7 @@
 # MiniBot v1.1
 #
 # TODO: instead of sending nothing, have the bot send a random personal message
-#
+#		when using a command, make all timers restart
 #
 import nextcord as discord
 from nextcord.ext import commands
@@ -64,8 +64,61 @@ async def reminders(interaction):
 		msgtext += "\n"
 		count += 1
 	msgtext += "```"
-	msg = await interaction.send(msgtext)
+	await interaction.send(msgtext)
 	vw = reminderView(bot, await interaction.original_message(), interaction.user, cursor)
 	await interaction.edit_original_message(view=vw)
+
+@bot.slash_command()
+async def messages(interaction):
+	text = "Respond with the new message text\n"
+	text += "Send 'CANCEL' to create nothing"
+	await interaction.send(text)
+	def check(m):
+		return m.channel == interaction.channel and m.author == interaction.user
+	try:
+		msg = await bot.wait_for('message', check=check, timeout=120)
+	except asyncio.TimeoutError:
+		await interaction.edit_original_message("You ran out of time, try again")
+	else:
+		content = msg.content
+		await msg.delete()
+		if content != "CANCEL":
+			# get input 1
+			inp1 = content
+			await interaction.edit_original_message(content=text.replace("new message text", "message type num\n1 - personality\n2 - notification\n3 - manga"))
+			try:
+				msg = await bot.wait_for('message', check=check, timeout=120)
+			except asyncio.TimeoutError:
+				await interaction.edit_original_message("You ran out of time, try again")
+			else:
+				content = msg.content
+				await msg.delete()
+				if content != "CANCEL":
+					# get input 2
+					inp2 = content
+					await interaction.edit_original_message(content=text.replace("message type num\n1 - personality\n2 - notification\n3 - manga", "message weight int"))
+					try:
+						msg = await bot.wait_for('message', check=check, timeout=120)
+					except asyncio.TimeoutError:
+						await interaction.edit_original_message("You ran out of time, try again")
+					else:
+						content = msg.content
+						await msg.delete()
+						if content != "CANCEL":
+							# get input 3
+							inp3 = content
+							await interaction.edit_original_message(content="Adding message to database")
+							try:
+								print(inp1)
+								print(inp2)
+								print(inp3)
+							except:
+								await interaction.edit_original_message(content="Error, try again")
+						else:
+							await interaction.edit_original_message("Cancelling...")
+				else:
+					await interaction.edit_original_message("Cancelling...")
+		else:
+			await interaction.edit_original_message("Cancelling...")
 
 bot.run(TOKEN)
