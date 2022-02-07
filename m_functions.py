@@ -141,6 +141,8 @@ class textEnum(Enum):
 	personality = 1
 	notification = 2
 	manga = 3
+	#startup = 4
+	#greeting = 5
 
 # Timers
 async def notify_timer(args):
@@ -149,13 +151,18 @@ async def notify_timer(args):
 	global maxTimers
 	global notifyTime
 	global timeNoLuck
+	global personalityOverride
 	chan = args["chan"]
 	if random.random() <= lowerFreq:
 		reminders = await getReminders(False)
-		if len(reminders) > 0:
+		if random.random() <= personalityOverride:
+			msgText = await getRandomMessage(textEnum.personality)
+			await chan.send(msgText)
+			timeNoLuck
+		elif len(reminders) > 0:
 			msgText = await getRandomMessage(textEnum.notification)
 			await chan.send(msgText.replace("***", random.choice(reminders)[0]))
-			timeNoLuck = 0
+		timeNoLuck = 0
 	else:
 		timeNoLuck += notifyTime
 	if timeNoLuck >= maxTimers * notifyTime:
@@ -191,7 +198,8 @@ async def manga_timer(args):
 			newChap = await getNewestChapter(i)
 			if newChap != result:
 				# If manga in database has been updated
-				await chan.send(inf.get("title") + " has been updated!")
+				msgText = await getRandomMessage(textEnum.manga)
+				await chan.send(msgText.replace("***", inf.get("title")))
 				await editManga(i, newChap)
 	timer = Timer(mangaTime, manga_timer, args={'chan':chan})
 
@@ -239,7 +247,7 @@ async def getReminders(priority):
 	if priority < 0:
 		cursor = con.execute("SELECT title, priority FROM REMINDERS")
 	else:
-		cursor = con.execute("SELECT title, priority FROM REMINDERS WHERE priority=?", (bool(priority),))
+		cursor = con.execute("SELECT title FROM REMINDERS WHERE priority=?", (bool(priority),))
 	return cursor.fetchall()
 
 async def addReminder(title, priority):
