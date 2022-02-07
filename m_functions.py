@@ -2,6 +2,7 @@ import nextcord as discord
 from nextcord.ext import commands
 import asyncio, sqlite3, random, math, requests, json
 from m_vars import *
+from enum import Enum
 
 # Classes
 class Timer:
@@ -27,7 +28,6 @@ class reminderView(discord.ui.View):
 		self.reminders = reminders
 		self.sort = -1
 		self.selected = 0
-		self.timeout = None
 	async def on_timeout(self):
 		await self.msg.delete()
 		self.stop()
@@ -137,6 +137,11 @@ class reminderView(discord.ui.View):
 				await self.update()
 				await self.msg.edit(self.msg.content + "Cancelling...")
 
+class temp(Enum):
+	personality = 1
+	notification = 2
+	manga = 3
+
 # Timers
 async def notify_timer(args):
 	# On Alarm, check if a reminder should be sent
@@ -189,7 +194,6 @@ async def manga_timer(args):
 	timer = Timer(mangaTime, manga_timer, args={'chan':chan})
 
 async def getNewestChapter(mangaID):
-	print((await getMangaInfo(mangaID)).get("title"))
 	response = requests.get("https://api.mangadex.org/manga/" + mangaID + "/aggregate")
 	respo = response.json().get("volumes")
 	vols = list(respo)
@@ -209,20 +213,24 @@ async def getMangaInfo(mangaID):
 # Database Functions
 async def checkConnection(chan):
 	global con
-	global devmsg
-	await chan.send("```Attempting database connection```")
+	msg = await chan.send("```Attempting database connection```")
 	con = sqlite3.connect("m_db.db")
 	try:
 		cursor = con.execute("SELECT title, priority FROM REMINDERS")
 	except:
-		await chan.send("```Creating REMINDERS table```")
+		await msg.edit("```Creating REMINDERS table```")
 		cursor = con.execute("CREATE TABLE REMINDERS (title TEXT PRIMARY KEY NOT NULL, priority BOOL NOT NULL);")
 	try:
 		cursor = con.execute("SELECT mangaID, chapterNUM FROM MANGA")
 	except:
-		await chan.send("```Creating MANGA table```")
+		await msg.edit("```Creating MANGA table```")
 		cursor = con.execute("CREATE TABLE MANGA (mangaID TEXT PRIMARY KEY NOT NULL, chapterNUM TEXT NOT NULL);")
-	await chan.send("```Connection successful!```")
+	try:
+		cursor = con.execute("SELECT msgText, msgType FROM MESSAGES")
+	except:
+		await msg.edit("```Creating MESSAGES table```")
+		cursor = con.execute("CREATE TABLE MESSAGES (msgText TEXT PRIMARY KEY NOT NULL, msgType INT NOT NULL);")
+	await msg.edit("```Connection successful!```")
 
 async def getReminders(priority):
 	global con
