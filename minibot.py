@@ -2,6 +2,12 @@
 #
 # TODO: 
 #		fix errors when view updates
+#		fix messages not deleting on command use
+#		fix timers not cancelling correctly
+#		randomly changing status/presence
+#		make notifications delete after some amount of time?
+#		make /messages print the enum automatically, enums are enumerable
+#		make high priorities ping user
 #
 import nextcord as discord
 from nextcord.ext import commands
