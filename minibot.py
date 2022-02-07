@@ -1,7 +1,6 @@
 # MiniBot v1.2
 #
 # TODO: 
-#		when using a command, make all timers restart
 #		fix errors when view updates
 #
 import nextcord as discord
