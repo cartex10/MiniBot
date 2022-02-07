@@ -1,7 +1,8 @@
-# MiniBot v1.1
+# MiniBot v1.2
 #
-# TODO: instead of sending nothing, have the bot send a random personal message
+# TODO: 
 #		when using a command, make all timers restart
+#		fix errors when view updates
 #
 import nextcord as discord
 from nextcord.ext import commands
