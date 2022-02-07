@@ -229,7 +229,7 @@ async def checkConnection(chan):
 		cursor = con.execute("SELECT msgText, msgType FROM MESSAGES")
 	except:
 		await msg.edit("```Creating MESSAGES table```")
-		cursor = con.execute("CREATE TABLE MESSAGES (msgText TEXT PRIMARY KEY NOT NULL, msgType INT NOT NULL);")
+		cursor = con.execute("CREATE TABLE MESSAGES (msgText TEXT PRIMARY KEY NOT NULL, msgType INT NOT NULL, msgWeight INT NOT NULL);")
 	await msg.edit("```Connection successful!```")
 
 async def getReminders(priority):
