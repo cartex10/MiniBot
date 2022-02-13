@@ -176,26 +176,14 @@ class messageView(discord.ui.View):
 					msgtext += "\t"
 				for i in range(-1, (25 - min([len(msg[0]), 20])) % 4):
 					msgtext += " "
-			if self.sort > 0:
-				if msg[2] == textEnum.personality.value:
-					msgtext += "PERSN"
-				elif msg[2] == textEnum.notification.value:
-					msgtext += "NOTIF"
-				elif msg[2] == textEnum.manga.value:
-					msgtext += "MANGA"
-				elif msg[2] == textEnum.questioning.value:
-					msgtext += "QUEST"
-			else:
-				if self.sort == -1:
-					msgtext += "ALL"
-				elif self.sort == textEnum.personality.value:
-					msgtext += "PERSN"
-				elif self.sort == textEnum.notification.value:
-					msgtext += "NOTIF"
-				elif self.sort == textEnum.manga.value:
-					msgtext += "MANGA"
-				elif self.sort == textEnum.questioning.value:
-					msgtext += "QUEST"
+			if msg[2] == textEnum.personality.value:
+				msgtext += "PERSN"
+			elif msg[2] == textEnum.notification.value:
+				msgtext += "NOTIF"
+			elif msg[2] == textEnum.manga.value:
+				msgtext += "MANGA"
+			elif msg[2] == textEnum.questioning.value:
+				msgtext += "QUEST"
 			if self.selected == count - 1:
 				msgtext += " << "
 			msgtext += "\n"
@@ -230,8 +218,7 @@ class messageView(discord.ui.View):
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
-			await self.update()
-			await self.msg.edit(self.msg.content + "You ran out of time to create the inventory, try again")
+			await self.update("You ran out of time to create the inventory, try again")
 		else:
 			content = msg.content
 			try:
@@ -241,7 +228,7 @@ class messageView(discord.ui.View):
 			except:
 				pass
 			if content.upper() == "Y":
-				await deleteMessage(self.messages[self.selected])
+				await deleteMessage(self.messages[self.selected][0], self.messages[self.selected][1], self.messages[self.selected][2])
 			else:
 				await self.update("Cancelling...")
 	@discord.ui.button(label='ᐯ', style=discord.ButtonStyle.secondary, row=2)
@@ -260,13 +247,15 @@ class messageView(discord.ui.View):
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
-			await self.update()
-			await self.msg.edit(self.msg.content + "You ran out of time to create the inventory, try again")
+			await self.update("You ran out of time to create the inventory, try again")
 		else:
 			content = msg.content
-			await msg.delete()
-			await msg.delete()
-			await msg.delete()
+			try:
+				await msg.delete()
+				await msg.delete()
+				await msg.delete()
+			except:
+				pass
 			if content != "CANCEL":
 				# get input 1 - Message text
 				inp1 = content
@@ -288,30 +277,28 @@ class messageView(discord.ui.View):
 						string += "Full weight"
 					string +='\n'
 				string += "Send 'CANCEL' to create nothing"
-				await self.update()
-				await self.msg.edit(self.msg.content + string)
+				await self.update(string)
 				try:
 					msg = await self.bot.wait_for('message', check=check, timeout=120)
 				except asyncio.TimeoutError:
-					await self.update()
-					await self.msg.edit(self.msg.content + "You ran out of time to create the inventory, try again")
+					await self.update("You ran out of time to create the inventory, try again")
 				else:
 					content = msg.content
-					await msg.delete()
-					await msg.delete()
-					await msg.delete()
+					try:
+						await msg.delete()
+						await msg.delete()
+						await msg.delete()
+					except:
+						pass
 				if content != "CANCEL":
 					# get input 2 - Weight
 					inp2 = content
 					await addMessage(inp1, textEnum.personality.value, inp2)
-					await self.update()
-					await self.msg.edit(self.msg.content + "Message template added successfully")
+					await self.update("Message template added successfully")
 				else:
-					await self.update()
-					await self.msg.edit(self.msg.content + "Cancelling...")
+					await self.update("Cancelling...")
 			else:
-				await self.update()
-				await self.msg.edit(self.msg.content + "Cancelling...")
+				await self.update("Cancelling...")
 	@discord.ui.button(label='ADD NOTIF', style=discord.ButtonStyle.primary, row=2)
 	async def addNOTIF(self, button: discord.ui.Button, interaction: discord.Interaction):
 		text = "Respond with the new message template\n"
@@ -399,15 +386,15 @@ async def notify_timer(args):
 		reminders = await getReminders(False)
 		if random.random() <= personalityOverride:
 			# Instead of notifying, send personal message
-			msgText = await getRandomMessage(textEnum.personality)
+			msgText = await getRandomMessage(textEnum.personality.value)
 			await chan.send(msgText)
 		elif len(reminders) > 0:
 			# Send low priority reminder
 			rem = random.choice(reminders)[0]
 			if rem.endswith('?'):
-				msgText = await getRandomMessage(textEnum.questioning)
+				msgText = await getRandomMessage(textEnum.questioning.value)
 			else:
-				msgText = await getRandomMessage(textEnum.notification)
+				msgText = await getRandomMessage(textEnum.notification.value)
 			await chan.send(msgText.replace("***", rem), delete_after=360*5)
 		timeNoLuck = 0
 	else:
@@ -418,9 +405,9 @@ async def notify_timer(args):
 		reminders = await getReminders(True)
 		rem = random.choice(reminders)[0]
 		if rem.endswith('?'):
-			msgText = await getRandomMessage(textEnum.questioning)
+			msgText = await getRandomMessage(textEnum.questioning.value)
 		else:
-			msgText = await getRandomMessage(textEnum.notification)
+			msgText = await getRandomMessage(textEnum.notification.value)
 		await chan.send(msgText.replace("***", rem), delete_after=360*5)
 		timeNoLuck = 0
 	n_timer = Timer(notifyTime, notify_timer, args={'chan':chan})
@@ -452,7 +439,7 @@ async def manga_timer(args):
 			newChap = await getNewestChapter(i)
 			if newChap != result:
 				# If manga in database has been updated
-				msgText = await getRandomMessage(textEnum.manga)
+				msgText = await getRandomMessage(textEnum.manga.value)
 				embed = discord.Embed().set_image(url=info.get("cover"))
 				await chan.send(msgText.replace("***", info.get("title")).replace("###", newChap), embed=embed)
 				await editManga(i, newChap)
@@ -568,7 +555,7 @@ async def addMessage(msgText, msgType, msgWeight):
 
 async def getRandomMessage(msgType):
 	global con
-	cursor = con.execute("SELECT msgText, msgWeight FROM MESSAGES WHERE msgType=?", (msgType.value,))
+	cursor = con.execute("SELECT msgText, msgWeight FROM MESSAGES WHERE msgType=?", (msgType,))
 	msgList = cursor.fetchall()
 	randList = []
 	count = 0
@@ -590,5 +577,5 @@ async def getMessages(msgType):
 
 async def deleteMessage(msgText, msgWeight, msgType):
 	global con
-	con.execute("DELETE FROM MESSAGES WHERE msgText=?, msgWeight=?, msgType=?", (msgText, msgWeight, msgType))
+	con.execute("DELETE FROM MESSAGES WHERE msgText=? AND msgWeight=? AND msgType=?", (msgText, msgWeight, msgType))
 	con.commit()
