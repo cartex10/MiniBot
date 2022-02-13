@@ -36,8 +36,6 @@ async def on_ready():
 	global on_check
 	global notifyTime
 	global mangaTime
-	global n_timer
-	global m_timer
 	if on_check is not True:
 		on_check = True
 		guild = bot.get_guild(GUILD)
@@ -53,12 +51,6 @@ async def on_ready():
 @bot.slash_command()
 async def reminders(interaction):
 	global con
-	global n_timer
-	global m_timer
-	n_timer.cancel()
-	guild = bot.get_guild(GUILD)
-	chan = discord.utils.get(guild.text_channels, name="general")
-	n_timer = Timer(notifyTime, notify_timer, args={'chan':chan})
 	cursor = await getReminders(-1)
 	msgtext = "```CURRENT REMINDERS\t\t\tPRTY\t\tSORT: ALL\n"
 	count = 1
@@ -89,12 +81,6 @@ async def reminders(interaction):
 
 @bot.slash_command()
 async def messages(interaction):
-	global n_timer
-	global m_timer
-	n_timer.cancel()
-	guild = bot.get_guild(GUILD)
-	chan = discord.utils.get(guild.text_channels, name="general")
-	n_timer = Timer(notifyTime, notify_timer, args={'chan':chan})
 	text = "Respond with the new message text\n"
 	text += "Send 'CANCEL' to create nothing"
 	await interaction.send(text)
