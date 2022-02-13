@@ -149,7 +149,7 @@ class messageView(discord.ui.View):
 	async def on_timeout(self):
 		await self.msg.delete()
 		self.stop()
-	async def update(self):
+	async def update(self, extra=None):
 		global con
 		self.messages = await getMessages(self.sort)
 		msgtext = "```MESSAGE TEXT\t\t\t\tTYPE\t\tWEIGHT\t\tSORT: "
@@ -201,6 +201,8 @@ class messageView(discord.ui.View):
 			msgtext += "\n"
 			count += 1
 		msgtext += "```"
+		if extra != None:
+			msgtext += extra
 		await self.msg.edit(msgtext)
 	@discord.ui.button(label='ᐱ', style=discord.ButtonStyle.secondary)
 	async def up(self, button: discord.ui.Button, interaction: discord.Interaction):
@@ -220,12 +222,28 @@ class messageView(discord.ui.View):
 		await self.update()
 	@discord.ui.button(label='Delete', style=discord.ButtonStyle.danger)
 	async def deletePERSN(self, button: discord.ui.Button, interaction: discord.Interaction):
-		# TO DO
-		#toDel = self.messages[self.selected]
-		#await deleteMessage(toDel[0], toDel[1]) 
-		#await self.update()
-		#await self.msg.edit(self.msg.content + "Reminder deleted!")
-		pass
+		text = "Are you sure you want to delete the following message? Y/n?\n"
+		text += self.messages[self.selected][0]
+		await self.update(text)
+		def check(m):
+			return m.channel == self.msg.channel and m.author == self.user
+		try:
+			msg = await self.bot.wait_for('message', check=check, timeout=120)
+		except asyncio.TimeoutError:
+			await self.update()
+			await self.msg.edit(self.msg.content + "You ran out of time to create the inventory, try again")
+		else:
+			content = msg.content
+			try:
+				await msg.delete()
+				await msg.delete()
+				await msg.delete()
+			except:
+				pass
+			if content.upper() == "Y":
+				await deleteMessage(self.messages[self.selected])
+			else:
+				await self.update("Cancelling...")
 	@discord.ui.button(label='ᐯ', style=discord.ButtonStyle.secondary, row=2)
 	async def down(self, button: discord.ui.Button, interaction: discord.Interaction):
 		if self.selected >=  await countReminders(self.sort) - 1:
@@ -567,5 +585,10 @@ async def getMessages(msgType):
 	if msgType < 0:
 		cursor = con.execute("SELECT msgText, msgWeight, msgType FROM MESSAGES")
 	else:
-		cursor = con.execute("SELECT msgText, msgWeight FROM MESSAGES WHERE msgType=?", (msgType,))
+		cursor = con.execute("SELECT msgText, msgWeight, msgType FROM MESSAGES WHERE msgType=?", (msgType,))
 	return cursor.fetchall()
+
+async def deleteMessage(msgText, msgWeight, msgType):
+	global con
+	con.execute("DELETE FROM MESSAGES WHERE msgText=?, msgWeight=?, msgType=?", (msgText, msgWeight, msgType))
+	con.commit()
