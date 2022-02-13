@@ -98,7 +98,7 @@ async def messages(interaction):
 			string = "message type num\n"
 			for i in textEnum:
 				string += str(i.value) + " - " + i.name
-				if i == i.notification:
+				if i == i.notification or i == i.questioning:
 					string += "\t(\\*\\*\\* replaces notification)"
 				elif i == textEnum.manga:
 					string += "\t(\\*\\*\\* replaces manga title, ### replaces chapter num)"

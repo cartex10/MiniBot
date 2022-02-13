@@ -141,10 +141,10 @@ class textEnum(Enum):
 	personality = 1
 	notification = 2
 	manga = 3
+	questioning = 4
 	#startup = 4
 	#greeting = 5
 	#status = 6
-	#questioning = 7
 
 # Timers
 async def notify_timer(args):
@@ -164,8 +164,12 @@ async def notify_timer(args):
 			await chan.send(msgText)
 		elif len(reminders) > 0:
 			# Send low priority reminder
-			msgText = await getRandomMessage(textEnum.notification)
-			await chan.send(msgText.replace("***", random.choice(reminders)[0]), delete_after=360*5)
+			rem = random.choice(reminders)[0]
+			if rem.endswith('?'):
+				msgText = await getRandomMessage(textEnum.questioning)
+			else:
+				msgText = await getRandomMessage(textEnum.notification)
+			await chan.send(msgText.replace("***", rem), delete_after=360*5)
 		timeNoLuck = 0
 	else:
 		# Do nothing
@@ -173,8 +177,12 @@ async def notify_timer(args):
 	if timeNoLuck >= maxTimers * notifyTime:
 		# Send high priority reminder
 		reminders = await getReminders(True)
-		msgText = await getRandomMessage(textEnum.notification)
-		await chan.send(msgText.replace("***", random.choice(reminders)[0]), delete_after=360*5, mention_author=True)
+		rem = random.choice(reminders)[0]
+		if rem.endswith('?'):
+			msgText = await getRandomMessage(textEnum.questioning)
+		else:
+			msgText = await getRandomMessage(textEnum.notification)
+		await chan.send(msgText.replace("***", rem), delete_after=360*5)
 		timeNoLuck = 0
 	n_timer = Timer(notifyTime, notify_timer, args={'chan':chan})
 
