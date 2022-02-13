@@ -1,4 +1,4 @@
-# MiniBot v1.2
+# MiniBot v1.3
 #
 # TODO: 
 #		fix messages not deleting on command use
