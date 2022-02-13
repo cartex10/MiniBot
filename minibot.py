@@ -1,9 +1,7 @@
 # MiniBot v1.2
 #
 # TODO: 
-#		fix errors when view updates
 #		fix messages not deleting on command use
-#		convert /messages to view
 #		randomly changing status/presence
 #		make high priorities ping user
 #		reminders for dates in the future, ie doctors appointments
