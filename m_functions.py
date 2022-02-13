@@ -203,7 +203,7 @@ class messageView(discord.ui.View):
 	async def sort(self, button: discord.ui.Button, interaction: discord.Interaction):
 		self.selected = 0
 		self.sort += 1
-		if self.sort > len(textEnum):
+		if self.sort >= len(textEnum):
 			self.sort = -1
 		await self.update()
 	@discord.ui.button(label='REFRESH', style=discord.ButtonStyle.success)
@@ -359,6 +359,132 @@ class messageView(discord.ui.View):
 					# get input 2 - Weight
 					inp2 = int(content)
 					await addMessage(inp1, textEnum.notification.value, inp2)
+					await self.update("Message template added successfully")
+				else:
+					await self.update("Cancelling...")
+			else:
+				await self.update("Cancelling...")
+	@discord.ui.button(label='ADD MANGA', style=discord.ButtonStyle.primary, row=2)
+	async def addMANGA(self, button: discord.ui.Button, interaction: discord.Interaction):
+		text = "Respond with the new message template\n"
+		text += "\\*\\*\\* replaces title, ### replaces chapter num"
+		text += "Send 'CANCEL' to create nothing"
+		await self.update(text)
+		def check(m):
+			return m.channel == self.msg.channel and m.author == self.user
+		try:
+			msg = await self.bot.wait_for('message', check=check, timeout=120)
+		except asyncio.TimeoutError:
+			await self.update("You ran out of time to create the inventory, try again")
+		else:
+			content = msg.content
+			try:
+				await msg.delete()
+				await msg.delete()
+				await msg.delete()
+			except:
+				pass
+			if content != "CANCEL":
+				# get input 1 - Message text
+				inp1 = content
+				count = 1
+				string = "Respond with the messages weight\n"
+				for i in ['0', '20', '40', '60', '80', '100']:
+					string += i + " - "
+					if i == '0':
+						string += "Never used"
+					elif i == '20':
+						string += "Fun to see, hard to get"
+					elif i == '40':
+						string += "Not too often"
+					elif i == '60':
+						string += "idk"
+					elif i == '80':
+						string += "Good not too often"
+					elif i == '100':
+						string += "Full weight"
+					string +='\n'
+				string += "Send 'CANCEL' to create nothing"
+				await self.update(string)
+				try:
+					msg = await self.bot.wait_for('message', check=check, timeout=120)
+				except asyncio.TimeoutError:
+					await self.update("You ran out of time to create the inventory, try again")
+				else:
+					content = msg.content
+					try:
+						await msg.delete()
+						await msg.delete()
+						await msg.delete()
+					except:
+						pass
+				if content != "CANCEL":
+					# get input 2 - Weight
+					inp2 = int(content)
+					await addMessage(inp1, textEnum.manga.value, inp2)
+					await self.update("Message template added successfully")
+				else:
+					await self.update("Cancelling...")
+			else:
+				await self.update("Cancelling...")
+	@discord.ui.button(label='ADD QUEST', style=discord.ButtonStyle.primary, row=2)
+	async def addQUEST(self, button: discord.ui.Button, interaction: discord.Interaction):
+		text = "Respond with the new message template\n"
+		text += "\\*\\*\\* replaces notification"
+		text += "Send 'CANCEL' to create nothing"
+		await self.update(text)
+		def check(m):
+			return m.channel == self.msg.channel and m.author == self.user
+		try:
+			msg = await self.bot.wait_for('message', check=check, timeout=120)
+		except asyncio.TimeoutError:
+			await self.update("You ran out of time to create the inventory, try again")
+		else:
+			content = msg.content
+			try:
+				await msg.delete()
+				await msg.delete()
+				await msg.delete()
+			except:
+				pass
+			if content != "CANCEL":
+				# get input 1 - Message text
+				inp1 = content
+				count = 1
+				string = "Respond with the messages weight\n"
+				for i in ['0', '20', '40', '60', '80', '100']:
+					string += i + " - "
+					if i == '0':
+						string += "Never used"
+					elif i == '20':
+						string += "Fun to see, hard to get"
+					elif i == '40':
+						string += "Not too often"
+					elif i == '60':
+						string += "idk"
+					elif i == '80':
+						string += "Good not too often"
+					elif i == '100':
+						string += "Full weight"
+					string +='\n'
+				string += "Send 'CANCEL' to create nothing"
+				await self.update(string)
+				try:
+					msg = await self.bot.wait_for('message', check=check, timeout=120)
+				except asyncio.TimeoutError:
+					await self.update("You ran out of time to create the inventory, try again")
+				else:
+					content = msg.content
+					try:
+						await msg.delete()
+						await msg.delete()
+						await msg.delete()
+					except:
+						pass
+				if content != "CANCEL":
+					# get input 2 - Weight
+					inp2 = int(content)
+					await addMessage(inp1, textEnum.questioning.value, inp2)
 					await self.update("Message template added successfully")
 				else:
 					await self.update("Cancelling...")
