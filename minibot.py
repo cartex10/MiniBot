@@ -8,6 +8,11 @@
 #		make notifications delete after some amount of time?
 #		make /messages print the enum automatically, enums are enumerable
 #		make high priorities ping user
+#		include chapter num in release message
+#		reminders for dates in the future, ie doctors appointments
+#		investigate multiple notifications
+#		mute command
+#		add special message templates for reminders that end with ?
 #
 import nextcord as discord
 from nextcord.ext import commands
@@ -105,7 +110,15 @@ async def messages(interaction):
 		if content != "CANCEL":
 			# get input 1
 			inp1 = content
-			await interaction.edit_original_message(content=text.replace("new message text", "message type num\n1 - personality\n2 - notification\n3 - manga"))
+			string = "message type num\n"
+			for i in textEnum:
+				string += str(i.value) + " - " + i.name
+				if i == i.notification:
+					string += "\t(\\*\\*\\* replaces notification)"
+				elif i == textEnum.manga:
+					string += "\t(\\*\\*\\* replaces manga title, ### replaces chapter num)"
+				string +='\n'
+			await interaction.edit_original_message(content=text.replace("new message text", string))
 			try:
 				msg = await bot.wait_for('message', check=check, timeout=120)
 			except asyncio.TimeoutError:
