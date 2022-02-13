@@ -209,8 +209,8 @@ class messageView(discord.ui.View):
 	@discord.ui.button(label='REFRESH', style=discord.ButtonStyle.success)
 	async def redo(self, button: discord.ui.Button, interaction: discord.Interaction):
 		await self.update()
-	@discord.ui.button(label='Delete', style=discord.ButtonStyle.danger)
-	async def deletePERSN(self, button: discord.ui.Button, interaction: discord.Interaction):
+	@discord.ui.button(label='DELETE', style=discord.ButtonStyle.danger)
+	async def delete(self, button: discord.ui.Button, interaction: discord.Interaction):
 		text = "Are you sure you want to delete the following message? Y/n?\n"
 		text += self.messages[self.selected][0]
 		await self.update(text)
@@ -243,7 +243,7 @@ class messageView(discord.ui.View):
 	async def addPERSN(self, button: discord.ui.Button, interaction: discord.Interaction):
 		text = "Respond with the new message template\n"
 		text += "Send 'CANCEL' to create nothing"
-		await self.msg.edit(self.msg.content + text)
+		await self.update(text)
 		def check(m):
 			return m.channel == self.msg.channel and m.author == self.user
 		try:
@@ -304,7 +304,7 @@ class messageView(discord.ui.View):
 	@discord.ui.button(label='ADD NOTIF', style=discord.ButtonStyle.primary, row=2)
 	async def addNOTIF(self, button: discord.ui.Button, interaction: discord.Interaction):
 		text = "Respond with the new message template\n"
-		text += "\\*\\*\\* replaces notification"
+		text += "\\*\\*\\* replaces notification\n"
 		text += "Send 'CANCEL' to create nothing"
 		await self.update(text)
 		def check(m):
@@ -367,7 +367,7 @@ class messageView(discord.ui.View):
 	@discord.ui.button(label='ADD MANGA', style=discord.ButtonStyle.primary, row=2)
 	async def addMANGA(self, button: discord.ui.Button, interaction: discord.Interaction):
 		text = "Respond with the new message template\n"
-		text += "\\*\\*\\* replaces title, ### replaces chapter num"
+		text += "\\*\\*\\* replaces title, ### replaces chapter num\n"
 		text += "Send 'CANCEL' to create nothing"
 		await self.update(text)
 		def check(m):
@@ -430,7 +430,7 @@ class messageView(discord.ui.View):
 	@discord.ui.button(label='ADD QUEST', style=discord.ButtonStyle.primary, row=2)
 	async def addQUEST(self, button: discord.ui.Button, interaction: discord.Interaction):
 		text = "Respond with the new message template\n"
-		text += "\\*\\*\\* replaces notification"
+		text += "\\*\\*\\* replaces notification\n"
 		text += "Send 'CANCEL' to create nothing"
 		await self.update(text)
 		def check(m):
@@ -494,7 +494,7 @@ class messageView(discord.ui.View):
 	async def addGREET(self, button: discord.ui.Button, interaction: discord.Interaction):
 		text = "Respond with the new message template\n"
 		text += "Send 'CANCEL' to create nothing"
-		await self.msg.edit(self.msg.content + text)
+		await self.update(text)
 		def check(m):
 			return m.channel == self.msg.channel and m.author == self.user
 		try:

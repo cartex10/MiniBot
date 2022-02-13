@@ -7,6 +7,7 @@
 #		reminders for dates in the future, ie doctors appointments
 #		investigate multiple notifications
 #		mute command
+#		limit how much stuff shows in views to 10 per page
 #
 import nextcord as discord
 from nextcord.ext import commands
