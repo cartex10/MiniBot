@@ -137,6 +137,215 @@ class reminderView(discord.ui.View):
 				await self.update()
 				await self.msg.edit(self.msg.content + "Cancelling...")
 
+class messageView(discord.ui.View):
+	def __init__(self, bot, msg, user, messages):
+		super().__init__()
+		self.bot = bot 
+		self.msg = msg
+		self.user = user
+		self.messages = messages
+		self.sort = -1
+		self.selected = 0
+	async def on_timeout(self):
+		await self.msg.delete()
+		self.stop()
+	async def update(self):
+		global con
+		self.messages = await getMessages(self.sort)
+		msgtext = "```MESSAGE TEXT\t\t\tTYPE\t\tWEIGHT\t\tSORT: "
+		if self.sort == -1:
+			msgtext += "ALL\n"
+		elif self.sort == textEnum.personality:
+			msgtext += "PERSN\n"
+		elif self.sort == textEnum.notification:
+			msgtext += "NOTIF\n"
+		elif self.sort == textEnum.manga:
+			msgtext += "MANGA\n"
+		elif self.sort == textEnum.questioning:
+			msgtext += "QUEST\n"
+		count = 1
+		for msg in self.messages:
+			if self.selected == count - 1:
+				msgtext += " >> "
+			msgtext += str(count) + ". " + msg[0] # + "\t\t" + str(msg[1])
+			if self.selected == count - 1:
+				for i in range(1, math.floor((30 - len(msg[0])) / 4)):
+					msgtext += "\t"
+			else:
+				for i in range(1, math.floor((30 - len(msg[0])) / 4)):
+					msgtext += "\t"
+				for i in range(-1, (30 - len(msg[0])) % 4):
+					msgtext += " "
+			if msg[1] == textEnum.personality.value:
+				msgtext += "PERSN\n"
+			elif msg[1] == textEnum.notification.value:
+				msgtext += "NOTIF\n"
+			elif msg[1] == textEnum.manga.value:
+				msgtext += "MANGA\n"
+			elif msg[1] == textEnum.questioning.value:
+				msgtext += "QUEST\n"
+			if self.selected == count - 1:
+				msgtext += " << "
+			msgtext += "\n"
+			count += 1
+		msgtext += "```"
+		await self.msg.edit(msgtext)
+	@discord.ui.button(label='ᐱ', style=discord.ButtonStyle.secondary)
+	async def up(self, button: discord.ui.Button, interaction: discord.Interaction):
+		if self.selected <= 0:
+			self.selected = await countReminders(self.sort)
+		self.selected -= 1
+		await self.update()
+	@discord.ui.button(label='SORT', style=discord.ButtonStyle.success)
+	async def sort(self, button: discord.ui.Button, interaction: discord.Interaction):
+		self.selected = 0
+		self.sort += 1
+		if self.sort > len(textEnum):
+			self.sort = -1
+		await self.update()
+	@discord.ui.button(label='REFRESH', style=discord.ButtonStyle.success)
+	async def redo(self, button: discord.ui.Button, interaction: discord.Interaction):
+		await self.update()
+	@discord.ui.button(label='Delete', style=discord.ButtonStyle.danger)
+	async def deletePERSN(self, button: discord.ui.Button, interaction: discord.Interaction):
+		# TO DO
+		#toDel = self.messages[self.selected]
+		#await deleteMessage(toDel[0], toDel[1]) 
+		#await self.update()
+		#await self.msg.edit(self.msg.content + "Reminder deleted!")
+		pass
+	@discord.ui.button(label='ᐯ', style=discord.ButtonStyle.secondary, row=2)
+	async def down(self, button: discord.ui.Button, interaction: discord.Interaction):
+		if self.selected >=  await countReminders(self.sort) - 1:
+			self.selected = -1
+		self.selected += 1
+		await self.update()
+	@discord.ui.button(label='ADD PERSN', style=discord.ButtonStyle.primary, row=2)
+	async def addPERSN(self, button: discord.ui.Button, interaction: discord.Interaction):
+		text = "Respond with the new message template\n"
+		text += "Send 'CANCEL' to create nothing"
+		await self.msg.edit(self.msg.content + text)
+		def check(m):
+			return m.channel == self.msg.channel and m.author == self.user
+		try:
+			msg = await self.bot.wait_for('message', check=check, timeout=120)
+		except asyncio.TimeoutError:
+			await self.update()
+			await self.msg.edit(self.msg.content + "You ran out of time to create the inventory, try again")
+		else:
+			content = msg.content
+			await msg.delete()
+			await msg.delete()
+			await msg.delete()
+			if content != "CANCEL":
+				# get input 1 - Message text
+				inp1 = content
+				count = 1
+				string = "Respond with the messages weight\n"
+				for i in ['0', '20', '40', '60', '80', '100']:
+					string += i + " - "
+					if i == '0':
+						string += "Never used"
+					elif i == '20':
+						string += "Fun to see, hard to get"
+					elif i == '40':
+						string += "Not too often"
+					elif i == '60':
+						string += "idk"
+					elif i == '80':
+						string += "Good not too often"
+					elif i == '100':
+						string += "Full weight"
+					string +='\n'
+				string += "Send 'CANCEL' to create nothing"
+				await self.update()
+				await self.msg.edit(self.msg.content + string)
+				try:
+					msg = await self.bot.wait_for('message', check=check, timeout=120)
+				except asyncio.TimeoutError:
+					await self.update()
+					await self.msg.edit(self.msg.content + "You ran out of time to create the inventory, try again")
+				else:
+					content = msg.content
+					await msg.delete()
+					await msg.delete()
+					await msg.delete()
+				if content != "CANCEL":
+					# get input 2 - Weight
+					inp2 = content
+					await addMessage(inp1, textEnum.personality.value, inp2)
+					await self.update()
+					await self.msg.edit(self.msg.content + "Message template added successfully")
+				else:
+					await self.update()
+					await self.msg.edit(self.msg.content + "Cancelling...")
+			else:
+				await self.update()
+				await self.msg.edit(self.msg.content + "Cancelling...")
+	@discord.ui.button(label='ADD NOTIF', style=discord.ButtonStyle.primary, row=2)
+	async def addNOTIF(self, button: discord.ui.Button, interaction: discord.Interaction):
+		text = "Respond with the new message template\n"
+		text += "\\*\\*\\* replaces notification"
+		text += "Send 'CANCEL' to create nothing"
+		await self.msg.edit(self.msg.content + text)
+		def check(m):
+			return m.channel == self.msg.channel and m.author == self.user
+		try:
+			msg = await self.bot.wait_for('message', check=check, timeout=120)
+		except asyncio.TimeoutError:
+			await self.update()
+			await self.msg.edit(self.msg.content + "You ran out of time to create the inventory, try again")
+		else:
+			content = msg.content
+			await msg.delete()
+			await msg.delete()
+			await msg.delete()
+			if content != "CANCEL":
+				# get input 1 - Message text
+				inp1 = content
+				count = 1
+				string = "Respond with the messages weight\n"
+				for i in ['0', '20', '40', '60', '80', '100']:
+					string += i + " - "
+					if i == '0':
+						string += "Never used"
+					elif i == '20':
+						string += "Fun to see, hard to get"
+					elif i == '40':
+						string += "Not too often"
+					elif i == '60':
+						string += "idk"
+					elif i == '80':
+						string += "Good not too often"
+					elif i == '100':
+						string += "Full weight"
+					string +='\n'
+				string += "Send 'CANCEL' to create nothing"
+				await self.update()
+				await self.msg.edit(self.msg.content + string)
+				try:
+					msg = await self.bot.wait_for('message', check=check, timeout=120)
+				except asyncio.TimeoutError:
+					await self.update()
+					await self.msg.edit(self.msg.content + "You ran out of time to create the inventory, try again")
+				else:
+					content = msg.content
+					await msg.delete()
+					await msg.delete()
+					await msg.delete()
+				if content != "CANCEL":
+					# get input 2 - Weight
+					inp2 = int(content)
+					await addMessage(inp1, textEnum.notification.value, inp2)
+					await self.update()
+					await self.msg.edit(self.msg.content + "Message template added successfully")
+				else:
+					await self.update()
+					await self.msg.edit(self.msg.content + "Cancelling...")
+			else:
+				await self.update()
+				await self.msg.edit(self.msg.content + "Cancelling...")
+
 class textEnum(Enum):
 	personality = 1
 	notification = 2
@@ -324,7 +533,7 @@ async def getManga():
 
 async def addMessage(msgText, msgType, msgWeight):
 	global con
-	con.execute("INSERT INTO MESSAGES VALUES (?, ?, ?)", (msgText, msgType, msgWeight))
+	con.execute("INSERT INTO MESSAGES VALUES (?, ?, ?)", (msgText, msgType.value, int(msgWeight)))
 	con.commit()
 
 async def getRandomMessage(msgType):
@@ -340,3 +549,11 @@ async def getRandomMessage(msgType):
 	if len(randList) == 0:
 		return None
 	return msgList[random.choice(randList)][0]
+
+async def getMessages(msgType):
+	global con
+	if msgType < 0:
+		cursor = con.execute("SELECT msgText, msgWeight, msgType FROM MESSAGES")
+	else:
+		cursor = con.execute("SELECT msgText, msgWeight FROM MESSAGES WHERE msgType=?", (msgType.value,))
+	return cursor.fetchall()
