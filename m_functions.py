@@ -152,38 +152,50 @@ class messageView(discord.ui.View):
 	async def update(self):
 		global con
 		self.messages = await getMessages(self.sort)
-		msgtext = "```MESSAGE TEXT\t\t\tTYPE\t\tWEIGHT\t\tSORT: "
+		msgtext = "```MESSAGE TEXT\t\t\t\tTYPE\t\tWEIGHT\t\tSORT: "
 		if self.sort == -1:
 			msgtext += "ALL\n"
-		elif self.sort == textEnum.personality:
+		elif self.sort == textEnum.personality.value:
 			msgtext += "PERSN\n"
-		elif self.sort == textEnum.notification:
+		elif self.sort == textEnum.notification.value:
 			msgtext += "NOTIF\n"
-		elif self.sort == textEnum.manga:
+		elif self.sort == textEnum.manga.value:
 			msgtext += "MANGA\n"
-		elif self.sort == textEnum.questioning:
+		elif self.sort == textEnum.questioning.value:
 			msgtext += "QUEST\n"
 		count = 1
 		for msg in self.messages:
 			if self.selected == count - 1:
-				msgtext += " >> "
-			msgtext += str(count) + ". " + msg[0] # + "\t\t" + str(msg[1])
+				msgtext += ">> "
+			msgtext += str(count) + ". " + msg[0][0:min([len(msg[0]), 20])] # + "\t\t" + str(msg[1])
 			if self.selected == count - 1:
-				for i in range(1, math.floor((30 - len(msg[0])) / 4)):
-					msgtext += "\t"
+				for i in range(1, math.floor((25 - min([len(msg[0]), 20])) / 4)):
+					msgtext += "\t "
 			else:
-				for i in range(1, math.floor((30 - len(msg[0])) / 4)):
+				for i in range(0, math.floor((25 - min([len(msg[0]), 20])) / 4)):
 					msgtext += "\t"
-				for i in range(-1, (30 - len(msg[0])) % 4):
+				for i in range(-1, (25 - min([len(msg[0]), 20])) % 4):
 					msgtext += " "
-			if msg[1] == textEnum.personality.value:
-				msgtext += "PERSN\n"
-			elif msg[1] == textEnum.notification.value:
-				msgtext += "NOTIF\n"
-			elif msg[1] == textEnum.manga.value:
-				msgtext += "MANGA\n"
-			elif msg[1] == textEnum.questioning.value:
-				msgtext += "QUEST\n"
+			if self.sort > 0:
+				if msg[2] == textEnum.personality.value:
+					msgtext += "PERSN"
+				elif msg[2] == textEnum.notification.value:
+					msgtext += "NOTIF"
+				elif msg[2] == textEnum.manga.value:
+					msgtext += "MANGA"
+				elif msg[2] == textEnum.questioning.value:
+					msgtext += "QUEST"
+			else:
+				if self.sort == -1:
+					msgtext += "ALL"
+				elif self.sort == textEnum.personality.value:
+					msgtext += "PERSN"
+				elif self.sort == textEnum.notification.value:
+					msgtext += "NOTIF"
+				elif self.sort == textEnum.manga.value:
+					msgtext += "MANGA"
+				elif self.sort == textEnum.questioning.value:
+					msgtext += "QUEST"
 			if self.selected == count - 1:
 				msgtext += " << "
 			msgtext += "\n"
@@ -347,10 +359,10 @@ class messageView(discord.ui.View):
 				await self.msg.edit(self.msg.content + "Cancelling...")
 
 class textEnum(Enum):
-	personality = 1
-	notification = 2
-	manga = 3
-	questioning = 4
+	personality = 0
+	notification = 1
+	manga = 2
+	questioning = 3
 	#startup = 4
 	#greeting = 5
 	#status = 6
@@ -555,5 +567,5 @@ async def getMessages(msgType):
 	if msgType < 0:
 		cursor = con.execute("SELECT msgText, msgWeight, msgType FROM MESSAGES")
 	else:
-		cursor = con.execute("SELECT msgText, msgWeight FROM MESSAGES WHERE msgType=?", (msgType.value,))
+		cursor = con.execute("SELECT msgText, msgWeight FROM MESSAGES WHERE msgType=?", (msgType,))
 	return cursor.fetchall()
