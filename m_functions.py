@@ -593,7 +593,7 @@ async def getMangaInfo(mangaID):
 			break
 	return {"title": title, "cover": cover, "errFlag": False}
 
-# Database Functions
+### Database Functions
 async def checkConnection(chan):
 	global con
 	msg = await chan.send("```Attempting database connection```")
@@ -615,6 +615,7 @@ async def checkConnection(chan):
 		cursor = con.execute("CREATE TABLE MESSAGES (msgText TEXT PRIMARY KEY NOT NULL, msgType INT NOT NULL, msgWeight INT NOT NULL);")
 	await msg.edit("```Connection successful!```")
 
+# Reminders
 async def getReminders(priority):
 	global con
 	if priority < 0:
@@ -641,6 +642,7 @@ async def deleteReminder(title, priority):
 	con.execute("DELETE FROM REMINDERS WHERE title=? AND priority=?", (title, priority))
 	con.commit()
 
+# Manga
 async def addManga(mangaID, chapterNUM):
 	global con
 	con.execute("INSERT INTO MANGA VALUES (?, ?)", (mangaID, chapterNUM))
@@ -672,6 +674,7 @@ async def getManga():
 		out.append(manga[0])
 	return out
 
+# Message
 async def addMessage(msgText, msgType, msgWeight):
 	global con
 	con.execute("INSERT INTO MESSAGES VALUES (?, ?, ?)", (msgText, msgType, msgWeight))
