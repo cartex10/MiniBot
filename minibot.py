@@ -3,14 +3,12 @@
 # TODO: 
 #		fix errors when view updates
 #		fix messages not deleting on command use
+#		convert /messages to view
 #		randomly changing status/presence
-#		make notifications delete after some amount of time?
 #		make high priorities ping user
-#		include chapter num in release message
 #		reminders for dates in the future, ie doctors appointments
 #		investigate multiple notifications
 #		mute command
-#		add special message templates for reminders that end with ?
 #
 import nextcord as discord
 from nextcord.ext import commands
@@ -80,61 +78,11 @@ async def reminders(interaction):
 
 @bot.slash_command()
 async def messages(interaction):
-	text = "Respond with the new message text\n"
-	text += "Send 'CANCEL' to create nothing"
-	await interaction.send(text)
-	def check(m):
-		return m.channel == interaction.channel and m.author == interaction.user
-	try:
-		msg = await bot.wait_for('message', check=check, timeout=120)
-	except asyncio.TimeoutError:
-		await interaction.edit_original_message(content="You ran out of time, try again")
-	else:
-		content = msg.content
-		await msg.delete()
-		if content != "CANCEL":
-			# get input 1
-			inp1 = content
-			string = "message type num\n"
-			for i in textEnum:
-				string += str(i.value) + " - " + i.name
-				if i == i.notification or i == i.questioning:
-					string += "\t(\\*\\*\\* replaces notification)"
-				elif i == textEnum.manga:
-					string += "\t(\\*\\*\\* replaces manga title, ### replaces chapter num)"
-				string +='\n'
-			await interaction.edit_original_message(content=text.replace("new message text", string))
-			try:
-				msg = await bot.wait_for('message', check=check, timeout=120)
-			except asyncio.TimeoutError:
-				await interaction.edit_original_message(content="You ran out of time, try again")
-			else:
-				content = msg.content
-				await msg.delete()
-				if content != "CANCEL":
-					# get input 2
-					inp2 = content
-					await interaction.edit_original_message(content=text.replace("new message text", "message weight int, DEFAULT=100"))
-					try:
-						msg = await bot.wait_for('message', check=check, timeout=120)
-					except asyncio.TimeoutError:
-						await interaction.edit_original_message(content="You ran out of time, try again")
-					else:
-						content = msg.content
-						await msg.delete()
-						if content != "CANCEL":
-							# get input 3
-							inp3 = content
-							await interaction.edit_original_message(content="Adding message to database")
-							try:
-								await addMessage(inp1, int(inp2), int(inp3))
-							except:
-								await interaction.edit_original_message(content="Error, try again")
-						else:
-							await interaction.edit_original_message(content="Cancelling...")
-				else:
-					await interaction.edit_original_message(content="Cancelling...")
-		else:
-			await interaction.edit_original_message(content="Cancelling...")
+	global con
+	cursor = getMessages(-1)
+	await interaction.send("temp")
+	view = messageView(bot, await interaction.original_message(),interaction.user, cursor)
+	await interaction.edit_original_message(view=view)
+	await view.update()
 
 bot.run(TOKEN)
