@@ -6,8 +6,6 @@ global maxTimers			# Amount of timers before higher priority reminder 					DEFAU
 global notifyTime			# Global timer length in seconds 									DEFAULT: notifyTime = 603
 global mangaTime			# Time between manga checks 										DEFAULT: mangaTime = 300
 global con
-global n_timer
-global m_timer
 
 timeNoLuck = 0
 on_check = False
