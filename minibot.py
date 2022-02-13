@@ -79,7 +79,7 @@ async def reminders(interaction):
 @bot.slash_command()
 async def messages(interaction):
 	global con
-	cursor = getMessages(-1)
+	cursor = await getMessages(-1)
 	await interaction.send("temp")
 	view = messageView(bot, await interaction.original_message(),interaction.user, cursor)
 	await interaction.edit_original_message(view=view)
