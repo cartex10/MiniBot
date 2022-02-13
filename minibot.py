@@ -3,10 +3,8 @@
 # TODO: 
 #		fix errors when view updates
 #		fix messages not deleting on command use
-#		fix timers not cancelling correctly
 #		randomly changing status/presence
 #		make notifications delete after some amount of time?
-#		make /messages print the enum automatically, enums are enumerable
 #		make high priorities ping user
 #		include chapter num in release message
 #		reminders for dates in the future, ie doctors appointments
@@ -44,6 +42,7 @@ async def on_ready():
 		await chan.send("```Waking MiniBot!```")
 		await chan.send("Hello! I'm getting ready to help you out!")
 		await checkConnection(chan)
+		chan = discord.utils.get(guild.text_channels, name="notifications")
 		n_timer = Timer(notifyTime, notify_timer, args={'chan':chan})
 		chan = discord.utils.get(guild.text_channels, name="manga-updates")
 		m_timer = Timer(mangaTime, manga_timer, args={'chan':chan})
