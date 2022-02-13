@@ -152,7 +152,7 @@ class messageView(discord.ui.View):
 	async def update(self, extra=None):
 		global con
 		self.messages = await getMessages(self.sort)
-		msgtext = "```MESSAGE TEXT\t\t\t\tTYPE\t\tWEIGHT\t\tSORT: "
+		msgtext = "```MESSAGE TEXT\t\t\t\t  TYPE\t\tWEIGHT\t\tSORT: "
 		if self.sort == -1:
 			msgtext += "ALL\n"
 		elif self.sort == textEnum.personality.value:
@@ -169,7 +169,7 @@ class messageView(discord.ui.View):
 				msgtext += ">> "
 			msgtext += str(count) + ". " + msg[0][0:min([len(msg[0]), 20])] # + "\t\t" + str(msg[1])
 			if self.selected == count - 1:
-				for i in range(1, math.floor((25 - min([len(msg[0]), 20])) / 4)):
+				for i in range(0, math.floor((25 - min([len(msg[0]), 20])) / 4)):
 					msgtext += "\t "
 			else:
 				for i in range(0, math.floor((25 - min([len(msg[0]), 20])) / 4)):
@@ -184,6 +184,7 @@ class messageView(discord.ui.View):
 				msgtext += "MANGA"
 			elif msg[2] == textEnum.questioning.value:
 				msgtext += "QUEST"
+			msgtext += "\t\t" + str(msg[1])
 			if self.selected == count - 1:
 				msgtext += " << "
 			msgtext += "\n"
@@ -229,6 +230,7 @@ class messageView(discord.ui.View):
 				pass
 			if content.upper() == "Y":
 				await deleteMessage(self.messages[self.selected][0], self.messages[self.selected][1], self.messages[self.selected][2])
+				await self.update("Message template deleted")
 			else:
 				await self.update("Cancelling...")
 	@discord.ui.button(label='ᐯ', style=discord.ButtonStyle.secondary, row=2)
@@ -304,19 +306,21 @@ class messageView(discord.ui.View):
 		text = "Respond with the new message template\n"
 		text += "\\*\\*\\* replaces notification"
 		text += "Send 'CANCEL' to create nothing"
-		await self.msg.edit(self.msg.content + text)
+		await self.update(text)
 		def check(m):
 			return m.channel == self.msg.channel and m.author == self.user
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
-			await self.update()
-			await self.msg.edit(self.msg.content + "You ran out of time to create the inventory, try again")
+			await self.update("You ran out of time to create the inventory, try again")
 		else:
 			content = msg.content
-			await msg.delete()
-			await msg.delete()
-			await msg.delete()
+			try:
+				await msg.delete()
+				await msg.delete()
+				await msg.delete()
+			except:
+				pass
 			if content != "CANCEL":
 				# get input 1 - Message text
 				inp1 = content
@@ -338,30 +342,28 @@ class messageView(discord.ui.View):
 						string += "Full weight"
 					string +='\n'
 				string += "Send 'CANCEL' to create nothing"
-				await self.update()
-				await self.msg.edit(self.msg.content + string)
+				await self.update(string)
 				try:
 					msg = await self.bot.wait_for('message', check=check, timeout=120)
 				except asyncio.TimeoutError:
-					await self.update()
-					await self.msg.edit(self.msg.content + "You ran out of time to create the inventory, try again")
+					await self.update("You ran out of time to create the inventory, try again")
 				else:
 					content = msg.content
-					await msg.delete()
-					await msg.delete()
-					await msg.delete()
+					try:
+						await msg.delete()
+						await msg.delete()
+						await msg.delete()
+					except:
+						pass
 				if content != "CANCEL":
 					# get input 2 - Weight
 					inp2 = int(content)
 					await addMessage(inp1, textEnum.notification.value, inp2)
-					await self.update()
-					await self.msg.edit(self.msg.content + "Message template added successfully")
+					await self.update("Message template added successfully")
 				else:
-					await self.update()
-					await self.msg.edit(self.msg.content + "Cancelling...")
+					await self.update("Cancelling...")
 			else:
-				await self.update()
-				await self.msg.edit(self.msg.content + "Cancelling...")
+				await self.update("Cancelling...")
 
 class textEnum(Enum):
 	personality = 0
@@ -550,7 +552,7 @@ async def getManga():
 
 async def addMessage(msgText, msgType, msgWeight):
 	global con
-	con.execute("INSERT INTO MESSAGES VALUES (?, ?, ?)", (msgText, msgType.value, int(msgWeight)))
+	con.execute("INSERT INTO MESSAGES VALUES (?, ?, ?)", (msgText, msgType, msgWeight))
 	con.commit()
 
 async def getRandomMessage(msgType):
