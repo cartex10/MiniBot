@@ -492,8 +492,8 @@ class textEnum(Enum):
 	notification = 1
 	manga = 2
 	questioning = 3
+	greeting = 4
 	#startup = 4
-	#greeting = 5
 	#status = 6
 
 # Timers
@@ -510,15 +510,21 @@ async def notify_timer(args):
 		reminders = await getReminders(False)
 		if random.random() <= personalityOverride:
 			# Instead of notifying, send personal message
-			msgText = await getRandomMessage(textEnum.personality.value)
+			greet = await getRandomMessage(textEnum.greeting.value)
+			msgText = greet + await getRandomMessage(textEnum.personality.value)
+			msgText = msgText[0].upper() + msgText[1:]
 			await chan.send(msgText)
 		elif len(reminders) > 0:
 			# Send low priority reminder
 			rem = random.choice(reminders)[0]
 			if rem.endswith('?'):
-				msgText = await getRandomMessage(textEnum.questioning.value)
+				greet = await getRandomMessage(textEnum.greeting.value)
+				msgText = greet + await getRandomMessage(textEnum.questioning.value)
+				msgText = msgText[0].upper() + msgText[1:]
 			else:
-				msgText = await getRandomMessage(textEnum.notification.value)
+				greet = await getRandomMessage(textEnum.greeting.value)
+				msgText = greet + await getRandomMessage(textEnum.notification.value)
+				msgText = msgText[0].upper() + msgText[1:]
 			await chan.send(msgText.replace("***", rem), delete_after=360*5)
 		timeNoLuck = 0
 	else:
@@ -529,9 +535,13 @@ async def notify_timer(args):
 		reminders = await getReminders(True)
 		rem = random.choice(reminders)[0]
 		if rem.endswith('?'):
-			msgText = await getRandomMessage(textEnum.questioning.value)
+			greet = await getRandomMessage(textEnum.greeting.value)
+			msgText = greet + await getRandomMessage(textEnum.questioning.value)
+			msgText = msgText[0].upper() + msgText[1:]
 		else:
-			msgText = await getRandomMessage(textEnum.notification.value)
+			greet = await getRandomMessage(textEnum.greeting.value)
+			msgText = greet + await getRandomMessage(textEnum.notification.value)
+			msgText = msgText[0].upper() + msgText[1:]
 		await chan.send(msgText.replace("***", rem), delete_after=360*5)
 		timeNoLuck = 0
 	n_timer = Timer(notifyTime, notify_timer, args={'chan':chan})
@@ -563,7 +573,9 @@ async def manga_timer(args):
 			newChap = await getNewestChapter(i)
 			if newChap != result:
 				# If manga in database has been updated
-				msgText = await getRandomMessage(textEnum.manga.value)
+				greet = await getRandomMessage(textEnum.greeting.value)
+				msgText = greet + await getRandomMessage(textEnum.manga.value)
+				msgText = msgText[0].upper() + msgText[1:]
 				embed = discord.Embed().set_image(url=info.get("cover"))
 				await chan.send(msgText.replace("***", info.get("title")).replace("###", newChap), embed=embed)
 				await editManga(i, newChap)
@@ -692,7 +704,13 @@ async def getRandomMessage(msgType):
 		count += 1
 	if len(randList) == 0:
 		return None
-	return msgList[random.choice(randList)][0]
+	if msgType == textEnum.greeting.value:
+		for i in range(0, 100):
+			randList.append(-1)
+	select = random.choice(randList)
+	if select == -1:
+		return ""
+	return msgList[select][0]
 
 async def getMessages(msgType):
 	global con
