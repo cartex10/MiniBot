@@ -144,6 +144,7 @@ class textEnum(Enum):
 	#startup = 4
 	#greeting = 5
 	#status = 6
+	#questioning = 7
 
 # Timers
 async def notify_timer(args):
@@ -160,7 +161,6 @@ async def notify_timer(args):
 		if random.random() <= personalityOverride:
 			msgText = await getRandomMessage(textEnum.personality)
 			await chan.send(msgText)
-			timeNoLuck
 		elif len(reminders) > 0:
 			msgText = await getRandomMessage(textEnum.notification)
 			await chan.send(msgText.replace("***", random.choice(reminders)[0]))
@@ -203,7 +203,7 @@ async def manga_timer(args):
 				# If manga in database has been updated
 				msgText = await getRandomMessage(textEnum.manga)
 				embed = discord.Embed().set_image(url=info.get("cover"))
-				await chan.send(msgText.replace("***", info.get("title")), embed=embed)
+				await chan.send(msgText.replace("***", info.get("title")).replace("###", newChap), embed=embed)
 				await editManga(i, newChap)
 	m_timer = Timer(mangaTime, manga_timer, args={'chan':chan})
 
