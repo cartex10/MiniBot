@@ -31,7 +31,7 @@ class reminderView(discord.ui.View):
 	async def on_timeout(self):
 		await self.msg.delete()
 		self.stop()
-	async def update(self):
+	async def update(self, extra=None):
 		global con
 		self.reminders = await getReminders(self.sort)
 		msgtext = "```CURRENT REMINDERS\t\t\tPRTY\t\tSORT: "
@@ -44,11 +44,12 @@ class reminderView(discord.ui.View):
 		count = 1
 		for item in self.reminders:
 			if self.selected == count - 1:
-				msgtext += " >> "
+				msgtext += ">> "
 			msgtext += str(count) + ". " + item[0] # + "\t\t" + str(item[1])
 			if self.selected == count - 1:
-				for i in range(1, math.floor((30 - len(item[0])) / 4)):
+				for i in range(2, math.floor((30 - len(item[0])) / 4)):
 					msgtext += "\t"
+				msgtext += "  "
 			else:
 				for i in range(1, math.floor((30 - len(item[0])) / 4)):
 					msgtext += "\t"
@@ -63,6 +64,8 @@ class reminderView(discord.ui.View):
 			msgtext += "\n"
 			count += 1
 		msgtext += "```"
+		if extra != None:
+			msgtext += extra
 		await self.msg.edit(msgtext)
 	@discord.ui.button(label='ᐱ', style=discord.ButtonStyle.secondary)
 	async def up(self, button: discord.ui.Button, interaction: discord.Interaction):
@@ -80,62 +83,55 @@ class reminderView(discord.ui.View):
 	@discord.ui.button(label='REFRESH', style=discord.ButtonStyle.success)
 	async def redo(self, button: discord.ui.Button, interaction: discord.Interaction):
 		await self.update()
-	@discord.ui.button(label='Delete', style=discord.ButtonStyle.danger)
+	@discord.ui.button(label='DELETE', style=discord.ButtonStyle.danger)
 	async def delete(self, button: discord.ui.Button, interaction: discord.Interaction):
 		toDel = self.reminders[self.selected]
 		await deleteReminder(toDel[0], toDel[1])
-		await self.update()
-		await self.msg.edit(self.msg.content + "Reminder deleted!")
+		await self.update("Reminder deleted!")
 	@discord.ui.button(label='ᐯ', style=discord.ButtonStyle.secondary, row=2)
 	async def down(self, button: discord.ui.Button, interaction: discord.Interaction):
 		if self.selected >=  await countReminders(self.sort) - 1:
 			self.selected = -1
 		self.selected += 1
 		await self.update()
-	@discord.ui.button(label='Add LP', style=discord.ButtonStyle.primary, row=2)
+	@discord.ui.button(label='ADD LP', style=discord.ButtonStyle.primary, row=2)
 	async def addLP(self, button: discord.ui.Button, interaction: discord.Interaction):
 		text = "Respond with the new reminder\n"
 		text += "Send 'CANCEL' to create nothing"
-		await self.msg.edit(self.msg.content + text)
+		await self.update(text)
 		def check(m):
 			return m.channel == self.msg.channel and m.author == self.user
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
-			await self.update()
-			await self.msg.edit(self.msg.content + "You ran out of time to create the inventory, try again")
+			await self.update("You ran out of time to create the inventory, try again")
 		else:
 			content = msg.content
 			await msg.delete()
 			if content != "CANCEL":
 				await addReminder(content, 0)
-				await self.update()
-				await self.msg.edit(self.msg.content + "Added Reminder")
+				await self.update("Added Reminder")
 			else:
-				await self.update()
-				await self.msg.edit(self.msg.content + "Cancelling...")
-	@discord.ui.button(label='Add HP', style=discord.ButtonStyle.primary, row=2)			
+				await self.update("Cancelling...")
+	@discord.ui.button(label='ADD HP', style=discord.ButtonStyle.primary, row=2)			
 	async def addHP(self, button: discord.ui.Button, interaction: discord.Interaction):
 		text = "Respond with the new reminder\n"
 		text += "Send 'CANCEL' to create nothing"
-		await self.msg.edit(self.msg.content + text)
+		await self.update(text)
 		def check(m):
 			return m.channel == self.msg.channel and m.author == self.user
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
-			await self.update()
-			await self.msg.edit(self.msg.content + "You ran out of time to create the inventory, try again")
+			await self.update("You ran out of time to create the inventory, try again")
 		else:
 			content = msg.content
 			await msg.delete()
 			if content != "CANCEL":
 				await addReminder(content, 1)
-				await self.update()
-				await self.msg.edit(self.msg.content + "Added Reminder")
+				await self.update("Added Reminder")
 			else:
-				await self.update()
-				await self.msg.edit(self.msg.content + "Cancelling...")
+				await self.update("Cancelling...")
 
 class messageView(discord.ui.View):
 	def __init__(self, bot, msg, user, messages):
@@ -624,7 +620,7 @@ async def getReminders(priority):
 	if priority < 0:
 		cursor = con.execute("SELECT title, priority FROM REMINDERS")
 	else:
-		cursor = con.execute("SELECT title FROM REMINDERS WHERE priority=?", (bool(priority),))
+		cursor = con.execute("SELECT title, priority FROM REMINDERS WHERE priority=?", (priority,))
 	return cursor.fetchall()
 
 async def addReminder(title, priority):
