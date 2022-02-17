@@ -31,7 +31,7 @@ class reminderView(discord.ui.View):
 	async def on_timeout(self):
 		await self.msg.delete()
 		self.stop()
-	async def update(self, extra=None):
+	async def update(self, sysMsg=None):
 		global con
 		self.reminders = await getReminders(self.sort)
 		msgtext = "```CURRENT REMINDERS\t\t\tPRTY\t\tSORT: "
@@ -64,8 +64,8 @@ class reminderView(discord.ui.View):
 			msgtext += "\n"
 			count += 1
 		msgtext += "```"
-		if extra != None:
-			msgtext += extra
+		if sysMsg != None:
+			msgtext += sysMsg
 		await self.msg.edit(msgtext)
 	@discord.ui.button(label='ᐱ', style=discord.ButtonStyle.secondary)
 	async def up(self, button: discord.ui.Button, interaction: discord.Interaction):
@@ -104,7 +104,7 @@ class reminderView(discord.ui.View):
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
-			await self.update("You ran out of time to create the inventory, try again")
+			await self.update("You ran out of time to add the reminder, try again")
 		else:
 			content = msg.content
 			await msg.delete()
@@ -123,7 +123,7 @@ class reminderView(discord.ui.View):
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
-			await self.update("You ran out of time to create the inventory, try again")
+			await self.update("You ran out of time to add the reminder, try again")
 		else:
 			content = msg.content
 			await msg.delete()
@@ -219,7 +219,7 @@ class messageView(discord.ui.View):
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
-			await self.update("You ran out of time to create the inventory, try again")
+			await self.update("You ran out of time to confirm, try again")
 		else:
 			content = msg.content
 			try:
@@ -249,7 +249,7 @@ class messageView(discord.ui.View):
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
-			await self.update("You ran out of time to create the inventory, try again")
+			await self.update("You ran out of time to add the message template, try again")
 		else:
 			content = msg.content
 			try:
@@ -283,7 +283,7 @@ class messageView(discord.ui.View):
 				try:
 					msg = await self.bot.wait_for('message', check=check, timeout=120)
 				except asyncio.TimeoutError:
-					await self.update("You ran out of time to create the inventory, try again")
+					await self.update("You ran out of time to add the message template, try again")
 				else:
 					content = msg.content
 					try:
@@ -312,7 +312,7 @@ class messageView(discord.ui.View):
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
-			await self.update("You ran out of time to create the inventory, try again")
+			await self.update("You ran out of time to add the message template, try again")
 		else:
 			content = msg.content
 			try:
@@ -346,7 +346,7 @@ class messageView(discord.ui.View):
 				try:
 					msg = await self.bot.wait_for('message', check=check, timeout=120)
 				except asyncio.TimeoutError:
-					await self.update("You ran out of time to create the inventory, try again")
+					await self.update("You ran out of time to add the message template, try again")
 				else:
 					content = msg.content
 					try:
@@ -375,7 +375,7 @@ class messageView(discord.ui.View):
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
-			await self.update("You ran out of time to create the inventory, try again")
+			await self.update("You ran out of time to add the message template, try again")
 		else:
 			content = msg.content
 			try:
@@ -409,7 +409,7 @@ class messageView(discord.ui.View):
 				try:
 					msg = await self.bot.wait_for('message', check=check, timeout=120)
 				except asyncio.TimeoutError:
-					await self.update("You ran out of time to create the inventory, try again")
+					await self.update("You ran out of time to add the message template, try again")
 				else:
 					content = msg.content
 					try:
@@ -438,7 +438,7 @@ class messageView(discord.ui.View):
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
-			await self.update("You ran out of time to create the inventory, try again")
+			await self.update("You ran out of time to add the message template, try again")
 		else:
 			content = msg.content
 			try:
@@ -472,7 +472,7 @@ class messageView(discord.ui.View):
 				try:
 					msg = await self.bot.wait_for('message', check=check, timeout=120)
 				except asyncio.TimeoutError:
-					await self.update("You ran out of time to create the inventory, try again")
+					await self.update("You ran out of time to add the message template, try again")
 				else:
 					content = msg.content
 					try:
@@ -500,7 +500,7 @@ class messageView(discord.ui.View):
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
-			await self.update("You ran out of time to create the inventory, try again")
+			await self.update("You ran out of time to add the message template, try again")
 		else:
 			content = msg.content
 			try:
@@ -534,7 +534,7 @@ class messageView(discord.ui.View):
 				try:
 					msg = await self.bot.wait_for('message', check=check, timeout=120)
 				except asyncio.TimeoutError:
-					await self.update("You ran out of time to create the inventory, try again")
+					await self.update("You ran out of time to add the message template, try again")
 				else:
 					content = msg.content
 					try:
