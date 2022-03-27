@@ -41,28 +41,47 @@ class reminderView(discord.ui.View):
 			msgtext += "LP\n"
 		elif self.sort == 1:
 			msgtext += "HP\n"
-		count = 1
-		for item in self.reminders:
-			if self.selected == count - 1:
+		count = max(self.selected - 4, 0)
+		if self.selected > len(self.reminders) - 5:
+			count = len(self.reminders) - 9
+		startcount = count
+		for item in self.reminders[count:count+9]:
+			if count == startcount and startcount > 0:
+				msgtext += "...\n"
+			if self.selected == count:
 				msgtext += ">> "
-			msgtext += str(count) + ". " + item[0] # + "\t\t" + str(item[1])
-			if self.selected == count - 1:
-				for i in range(2, math.floor((30 - len(item[0])) / 4)):
+			temp = item[0]
+			tempLen = len(temp)
+			tooLong = False
+			if len(temp) > 15:
+				temp = temp[0:14]
+				tempLen = len(temp) + 4
+				tooLong = True
+			msgtext += str(count + 1) + ". " + temp
+			if tooLong:
+				msgtext += "..."
+			if self.selected == count:
+				for i in range(0, math.floor((23 - tempLen) / 4)):
 					msgtext += "\t"
-				msgtext += "  "
+				for i in range(0, (23 - tempLen) % 4 - 1):
+					msgtext += " "
 			else:
-				for i in range(1, math.floor((30 - len(item[0])) / 4)):
+				for i in range(0, math.floor((26 - tempLen) / 4)):
 					msgtext += "\t"
-				for i in range(-1, (30 - len(item[0])) % 4):
+				for i in range(0, (26 - tempLen) % 4 - 1):
 					msgtext += " "	
 			if not item[1]:
 				msgtext += "LP"
 			elif item[1]:
 				msgtext += "HP"
-			if self.selected == count - 1:
+			if self.selected == count:
 				msgtext += " << "
 			msgtext += "\n"
 			count += 1
+			if count == startcount + 9:
+				if count < len(self.reminders):
+					msgtext += "...\n"
+				break
 		msgtext += "```"
 		if sysMsg != None:
 			msgtext += sysMsg
@@ -148,7 +167,7 @@ class messageView(discord.ui.View):
 	async def update(self, extra=None):
 		global con
 		self.messages = await getMessages(self.sort)
-		msgtext = "```MESSAGE TEXT\t\t\t\t  TYPE\t\tWEIGHT\t\tSORT: "
+		msgtext = "```MESSAGE TEXT\t\t\t\tTYPE\t\tWEIGHT\t\tSORT: "
 		if self.sort == -1:
 			msgtext += "ALL\n"
 		elif self.sort == textEnum.personality.value:
@@ -161,18 +180,34 @@ class messageView(discord.ui.View):
 			msgtext += "QUEST\n"
 		elif self.sort == textEnum.greeting.value:
 			msgtext += "GREET\n"
-		count = 1
+		count = max(self.selected - 4, 0)
+		if self.selected > len(self.messages) - 5:
+			count = len(self.messages) - 9
+		startcount = count
 		for msg in self.messages:
-			if self.selected == count - 1:
+			if count == startcount and startcount > 0:
+				msgtext += "...\n"
+			if self.selected == count:
 				msgtext += ">> "
-			msgtext += str(count) + ". " + msg[0][0:min([len(msg[0]), 20])] # + "\t\t" + str(msg[1])
-			if self.selected == count - 1:
-				for i in range(0, math.floor((25 - min([len(msg[0]), 20])) / 4)):
-					msgtext += "\t "
-			else:
-				for i in range(0, math.floor((25 - min([len(msg[0]), 20])) / 4)):
+			temp = msg[0]
+			tempLen = len(temp)
+			tooLong = False
+			if len(temp) > 15:
+				temp = temp[0:14]
+				tempLen = len(temp) + 4
+				tooLong = True
+			msgtext += str(count) + ". " + temp
+			if tooLong:
+				msgtext += "..."
+			if self.selected == count:
+				for i in range(0, math.floor((23 - tempLen) / 4)):
 					msgtext += "\t"
-				for i in range(-1, (25 - min([len(msg[0]), 20])) % 4):
+				for i in range(0, (23 - tempLen) % 4 - 1):
+					msgtext += " "
+			else:
+				for i in range(0, math.floor((26 - tempLen) / 4)):
+					msgtext += "\t"
+				for i in range(0, (26 - tempLen) % 4 - 1):
 					msgtext += " "
 			if msg[2] == textEnum.personality.value:
 				msgtext += "PERSN"
@@ -185,10 +220,14 @@ class messageView(discord.ui.View):
 			elif msg[2] == textEnum.greeting.value:
 				msgtext += "GREET"
 			msgtext += "\t\t" + str(msg[1])
-			if self.selected == count - 1:
+			if self.selected == count:
 				msgtext += " << "
 			msgtext += "\n"
 			count += 1
+			if count == startcount + 9:
+				if count < len(self.reminders):
+					msgtext += "...\n"
+				break
 		msgtext += "```"
 		if extra != None:
 			msgtext += extra
