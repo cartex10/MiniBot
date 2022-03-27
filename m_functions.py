@@ -576,21 +576,15 @@ async def notify_timer(args):
 		reminders = await getReminders(False)
 		if random.random() <= personalityOverride:
 			# Instead of notifying, send personal message
-			greet = await getRandomMessage(textEnum.greeting.value)
-			msgText = greet + await getRandomMessage(textEnum.personality.value)
-			msgText = msgText[0].upper() + msgText[1:]
+			msgText = constructMessage(textEnum.personality)
 			await chan.send(msgText)
 		elif len(reminders) > 0:
 			# Send low priority reminder
 			rem = random.choice(reminders)[0]
 			if rem.endswith('?'):
-				greet = await getRandomMessage(textEnum.greeting.value)
-				msgText = greet + await getRandomMessage(textEnum.questioning.value)
-				msgText = msgText[0].upper() + msgText[1:]
+				msgText = constructMessage(textEnum.questioning)
 			else:
-				greet = await getRandomMessage(textEnum.greeting.value)
-				msgText = greet + await getRandomMessage(textEnum.notification.value)
-				msgText = msgText[0].upper() + msgText[1:]
+				msgText = constructMessage(textEnum.notification)
 			await chan.send(msgText.replace("***", rem), delete_after=360*5)
 		timeNoLuck = 0
 	else:
@@ -601,13 +595,9 @@ async def notify_timer(args):
 		reminders = await getReminders(True)
 		rem = random.choice(reminders)[0]
 		if rem.endswith('?'):
-			greet = await getRandomMessage(textEnum.greeting.value)
-			msgText = greet + await getRandomMessage(textEnum.questioning.value)
-			msgText = msgText[0].upper() + msgText[1:]
+			msgText = constructMessage(textEnum.questioning)
 		else:
-			greet = await getRandomMessage(textEnum.greeting.value)
-			msgText = greet + await getRandomMessage(textEnum.notification.value)
-			msgText = msgText[0].upper() + msgText[1:]
+			msgText = constructMessage(textEnum.notification)
 		await chan.send(msgText.replace("***", rem), delete_after=360*5)
 		timeNoLuck = 0
 	n_timer = Timer(notifyTime, notify_timer, args={'chan':chan})
@@ -670,6 +660,14 @@ async def getMangaInfo(mangaID):
 			cover += "/" + response.json().get("data").get("attributes").get("fileName")
 			break
 	return {"title": title, "cover": cover, "errFlag": False}
+
+async def constructMessage(msgType):
+	greet = await getRandomMessage(textEnum.greeting.value)
+	msgText = await getRandomMessage(msgType.value)
+	if greet == "":
+		return msgText[0].upper() + msgText[1:]
+	else:
+		return greet[0].upper() + greet[1:] + " " + msgText[0].lower() + msgText[1:]
 
 ### Database Functions
 async def checkConnection(chan):
