@@ -44,6 +44,8 @@ class reminderView(discord.ui.View):
 		count = max(self.selected - 4, 0)
 		if self.selected > len(self.reminders) - 5:
 			count = len(self.reminders) - 9
+		if count < 0:
+			count = 0
 		startcount = count
 		for item in self.reminders[count:count+9]:
 			if count == startcount and startcount > 0:
@@ -51,15 +53,10 @@ class reminderView(discord.ui.View):
 			if self.selected == count:
 				msgtext += ">> "
 			temp = item[0]
-			tempLen = len(temp)
-			tooLong = False
 			if len(temp) > 15:
-				temp = temp[0:14]
-				tempLen = len(temp) + 4
-				tooLong = True
+				temp = temp[0:14] + "..."
+			tempLen = len(temp)
 			msgtext += str(count + 1) + ". " + temp
-			if tooLong:
-				msgtext += "..."
 			if self.selected == count:
 				for i in range(0, math.floor((23 - tempLen) / 4)):
 					msgtext += "\t"
@@ -88,9 +85,9 @@ class reminderView(discord.ui.View):
 		await self.msg.edit(msgtext)
 	@discord.ui.button(label='ᐱ', style=discord.ButtonStyle.secondary)
 	async def up(self, button: discord.ui.Button, interaction: discord.Interaction):
-		if self.selected <= 0:
-			self.selected = await countReminders(self.sort)
 		self.selected -= 1
+		if self.selected < 0:
+			self.selected = await countReminders(self.sort) - 1
 		await self.update()
 	@discord.ui.button(label='SORT', style=discord.ButtonStyle.success)
 	async def sort(self, button: discord.ui.Button, interaction: discord.Interaction):
@@ -107,6 +104,8 @@ class reminderView(discord.ui.View):
 		toDel = self.reminders[self.selected]
 		await deleteReminder(toDel[0], toDel[1])
 		await self.update("Reminder deleted!")
+		if self.selected >=  await countReminders(self.sort) - 1:
+			self.selected = -1
 	@discord.ui.button(label='ᐯ', style=discord.ButtonStyle.secondary, row=2)
 	async def down(self, button: discord.ui.Button, interaction: discord.Interaction):
 		if self.selected >=  await countReminders(self.sort) - 1:
@@ -183,22 +182,19 @@ class messageView(discord.ui.View):
 		count = max(self.selected - 4, 0)
 		if self.selected > len(self.messages) - 5:
 			count = len(self.messages) - 9
+		if count < 0:
+			count = 0
 		startcount = count
-		for msg in self.messages:
+		for msg in self.messages[count:count+9]:
 			if count == startcount and startcount > 0:
 				msgtext += "...\n"
 			if self.selected == count:
 				msgtext += ">> "
 			temp = msg[0]
-			tempLen = len(temp)
-			tooLong = False
 			if len(temp) > 15:
-				temp = temp[0:14]
-				tempLen = len(temp) + 4
-				tooLong = True
-			msgtext += str(count) + ". " + temp
-			if tooLong:
-				msgtext += "..."
+				temp = temp[0:14] + "..."
+			tempLen = len(temp)
+			msgtext += str(count + 1) + ". " + temp
 			if self.selected == count:
 				for i in range(0, math.floor((23 - tempLen) / 4)):
 					msgtext += "\t"
@@ -234,9 +230,9 @@ class messageView(discord.ui.View):
 		await self.msg.edit(msgtext)
 	@discord.ui.button(label='ᐱ', style=discord.ButtonStyle.secondary)
 	async def up(self, button: discord.ui.Button, interaction: discord.Interaction):
-		if self.selected <= 0:
-			self.selected = await countReminders(self.sort)
 		self.selected -= 1
+		if self.selected < 0:
+			self.selected = len(self.messages) - 1
 		await self.update()
 	@discord.ui.button(label='SORT', style=discord.ButtonStyle.success)
 	async def sort(self, button: discord.ui.Button, interaction: discord.Interaction):
@@ -270,11 +266,13 @@ class messageView(discord.ui.View):
 			if content.upper() == "Y":
 				await deleteMessage(self.messages[self.selected][0], self.messages[self.selected][1], self.messages[self.selected][2])
 				await self.update("Message template deleted")
+				if self.selected >= len(self.messages) - 1:
+					self.selected = -1
 			else:
 				await self.update("Cancelling...")
 	@discord.ui.button(label='ᐯ', style=discord.ButtonStyle.secondary, row=2)
 	async def down(self, button: discord.ui.Button, interaction: discord.Interaction):
-		if self.selected >=  await countReminders(self.sort) - 1:
+		if self.selected >= len(self.messages) - 1:
 			self.selected = -1
 		self.selected += 1
 		await self.update()
