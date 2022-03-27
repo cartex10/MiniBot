@@ -677,7 +677,10 @@ async def manga_timer(args):
 	m_timer = Timer(mangaTime, manga_timer, args={'chan':chan})
 
 async def getNewestChapter(mangaID):
-	response = requests.get("https://api.mangadex.org/manga/" + mangaID + "/aggregate")
+	try:
+		response = requests.get("https://api.mangadex.org/manga/" + mangaID + "/aggregate")
+	except:
+		pass
 	respo = response.json().get("volumes")
 	vols = list(respo)
 	try:
@@ -687,7 +690,10 @@ async def getNewestChapter(mangaID):
 	return chaps[0]
 
 async def getMangaInfo(mangaID):
-	resp = requests.get("https://api.mangadex.org/manga/" + mangaID)
+	try:
+		resp = requests.get("https://api.mangadex.org/manga/" + mangaID)
+	except:
+		pass
 	if resp.json().get("result") != "ok":
 		return {"errFlag": True}
 	title = list(resp.json().get("data").get("attributes").get("title").values())[0]
