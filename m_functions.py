@@ -28,6 +28,7 @@ class reminderView(discord.ui.View):
 		self.reminders = reminders
 		self.sort = -1
 		self.selected = 0
+		self.timeout = 0
 	async def on_timeout(self):
 		await self.msg.delete()
 		self.stop()
@@ -160,6 +161,7 @@ class messageView(discord.ui.View):
 		self.messages = messages
 		self.sort = -1
 		self.selected = 0
+		self.timeout = 0
 	async def on_timeout(self):
 		await self.msg.delete()
 		self.stop()

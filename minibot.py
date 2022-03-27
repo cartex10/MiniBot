@@ -5,21 +5,14 @@
 #		randomly changing status/presence
 #	!	make high priorities ping user
 #		reminders for dates in the future, ie doctors appointments
-#		investigate multiple notifications
 #		mute command
-#	!	limit how much stuff shows in views to 10 per page
-#	!	fix greetings: adding space between greeting and text, make text auto uppercase or lowercase
 #		lower time between notifs slightly
-#	!	add ... to shortened texts
-#		shorten reminders that are too long
 #		in reminderView move TYPE over a bit
-#		fix selected formatting
 #	!	add up 5 and down 5 buttons
 #	!	make weight array into enum
 #	!	stop sending messages overnight, say goodnight and good morning
-#	!	fix deleting bottom item in views leaving selected outside of bounds
-#	!	make #menu channel where bot auto sends reminder views that never timeout
-#		congratulation message upon reminder deletion
+#		completion message upon reminder deletion
+#	!	add error checking to mandadex api calls
 #
 import nextcord as discord
 from nextcord.ext import commands
@@ -54,6 +47,20 @@ async def on_ready():
 		n_timer = Timer(notifyTime, notify_timer, args={'chan':chan})
 		chan = discord.utils.get(guild.text_channels, name="manga-updates")
 		m_timer = Timer(mangaTime, manga_timer, args={'chan':chan})
+	chan = discord.utils.get(guild.text_channels, name="menu")
+	user = guild.owner
+	# Send ReminderView in #menu
+	cursor = await getReminders(-1)
+	msg = await chan.send("Please wait one moment...")
+	view = reminderView(bot, msg, user, cursor)
+	await msg.edit(view=view)
+	await view.update()
+	# Send MessageView in #menu
+	cursor = await getMessages(-1)
+	msg = await chan.send("Please wait one moment...")
+	view = messageView(bot, msg, user, cursor)
+	await msg.edit(view=view)
+	await view.update()
 
 @bot.slash_command()
 async def reminders(interaction):
