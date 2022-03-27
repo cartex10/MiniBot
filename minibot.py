@@ -1,22 +1,25 @@
 # MiniBot v1.3
 #
-# TODO: 
+# TODO: ! - priority; * - working on
 #		fix messages not deleting on command use
 #		randomly changing status/presence
-#		make high priorities ping user
+#	!	make high priorities ping user
 #		reminders for dates in the future, ie doctors appointments
 #		investigate multiple notifications
 #		mute command
-#		limit how much stuff shows in views to 10 per page
-#		fix greetings: adding space between greeting and text, make text auto uppercase or lowercase
+#	!	limit how much stuff shows in views to 10 per page
+#	!	fix greetings: adding space between greeting and text, make text auto uppercase or lowercase
 #		lower time between notifs slightly
-#		limit how many database members are sent in message to 10 to limit number of characters sent in message
-#		add ... to shortened texts
+#	!	add ... to shortened texts
 #		shorten reminders that are too long
 #		in reminderView move TYPE over a bit
 #		fix selected formatting
-#		add up 5 and down 5 buttons
-#		make weight array into enum
+#	!	add up 5 and down 5 buttons
+#	!	make weight array into enum
+#	!	stop sending messages overnight, say goodnight and good morning
+#	!	fix deleting bottom item in views leaving selected outside of bounds
+#	!	make #menu channel where bot auto sends reminder views that never timeout
+#		congratulation message upon reminder deletion
 #
 import nextcord as discord
 from nextcord.ext import commands
