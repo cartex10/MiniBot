@@ -223,7 +223,7 @@ class messageView(discord.ui.View):
 			msgtext += "\n"
 			count += 1
 			if count == startcount + 9:
-				if count < len(self.reminders):
+				if count < len(self.messages):
 					msgtext += "...\n"
 				break
 		msgtext += "```"
