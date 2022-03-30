@@ -615,15 +615,15 @@ async def notify_timer(args):
 		reminders = await getReminders(False)
 		if random.random() <= personalityOverride:
 			# Instead of notifying, send personal message
-			msgText = constructMessage(textEnum.personality)
+			msgText = await constructMessage(textEnum.personality)
 			await chan.send(msgText)
 		elif len(reminders) > 0:
 			# Send low priority reminder
 			rem = random.choice(reminders)[0]
 			if rem.endswith('?'):
-				msgText = constructMessage(textEnum.questioning)
+				msgText = await constructMessage(textEnum.questioning)
 			else:
-				msgText = constructMessage(textEnum.notification)
+				msgText = await constructMessage(textEnum.notification)
 			await chan.send(msgText.replace("***", rem), delete_after=360*5)
 		timeNoLuck = 0
 	else:
@@ -634,9 +634,9 @@ async def notify_timer(args):
 		reminders = await getReminders(True)
 		rem = random.choice(reminders)[0]
 		if rem.endswith('?'):
-			msgText = constructMessage(textEnum.questioning)
+			msgText = await constructMessage(textEnum.questioning)
 		else:
-			msgText = constructMessage(textEnum.notification)
+			msgText = await constructMessage(textEnum.notification)
 		await chan.send(msgText.replace("***", rem), delete_after=360*5)
 		timeNoLuck = 0
 	n_timer = Timer(notifyTime, notify_timer, args={'chan':chan})
