@@ -712,7 +712,7 @@ async def constructMessage(msgType):
 	if greet == "":
 		return msgText[0].upper() + msgText[1:].lower()
 	else:
-		return greet[0].upper() + greet[1:].lower() + " " + msgText[].lower()
+		return greet[0].upper() + greet[1:].lower() + " " + msgText.lower()
 
 ### Database Functions
 async def checkConnection(chan):
