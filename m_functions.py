@@ -119,7 +119,7 @@ class reminderView(discord.ui.View):
 		text += "Send 'CANCEL' to create nothing"
 		await self.update(text)
 		def check(m):
-			return m.channel == self.msg.channel and m.author == self.user
+			return m.channel == self.msg.channel
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
@@ -138,7 +138,7 @@ class reminderView(discord.ui.View):
 		text += "Send 'CANCEL' to create nothing"
 		await self.update(text)
 		def check(m):
-			return m.channel == self.msg.channel and m.author == self.user
+			return m.channel == self.msg.channel
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
@@ -252,7 +252,7 @@ class messageView(discord.ui.View):
 		text += self.messages[self.selected][0]
 		await self.update(text)
 		def check(m):
-			return m.channel == self.msg.channel and m.author == self.user
+			return m.channel == self.msg.channel
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
@@ -284,7 +284,7 @@ class messageView(discord.ui.View):
 		text += "Send 'CANCEL' to create nothing"
 		await self.update(text)
 		def check(m):
-			return m.channel == self.msg.channel and m.author == self.user
+			return m.channel == self.msg.channel
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
@@ -347,7 +347,7 @@ class messageView(discord.ui.View):
 		text += "Send 'CANCEL' to create nothing"
 		await self.update(text)
 		def check(m):
-			return m.channel == self.msg.channel and m.author == self.user
+			return m.channel == self.msg.channel
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
@@ -410,7 +410,7 @@ class messageView(discord.ui.View):
 		text += "Send 'CANCEL' to create nothing"
 		await self.update(text)
 		def check(m):
-			return m.channel == self.msg.channel and m.author == self.user
+			return m.channel == self.msg.channel
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
@@ -473,7 +473,7 @@ class messageView(discord.ui.View):
 		text += "Send 'CANCEL' to create nothing"
 		await self.update(text)
 		def check(m):
-			return m.channel == self.msg.channel and m.author == self.user
+			return m.channel == self.msg.channel
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
@@ -535,7 +535,7 @@ class messageView(discord.ui.View):
 		text += "Send 'CANCEL' to create nothing"
 		await self.update(text)
 		def check(m):
-			return m.channel == self.msg.channel and m.author == self.user
+			return m.channel == self.msg.channel
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
@@ -710,9 +710,9 @@ async def constructMessage(msgType):
 	greet = await getRandomMessage(textEnum.greeting.value)
 	msgText = await getRandomMessage(msgType.value)
 	if greet == "":
-		return msgText[0].upper() + msgText[1:]
+		return msgText[0].upper() + msgText[1:].lower()
 	else:
-		return greet[0].upper() + greet[1:] + " " + msgText[0].lower() + msgText[1:]
+		return greet[0].upper() + greet[1:].lower() + " " + msgText[].lower()
 
 ### Database Functions
 async def checkConnection(chan):
