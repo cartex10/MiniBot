@@ -35,9 +35,9 @@ async def on_ready():
 	global on_check
 	global notifyTime
 	global mangaTime
+	guild = bot.get_guild(GUILD)
 	if on_check is not True:
 		on_check = True
-		guild = bot.get_guild(GUILD)
 		await bot.change_presence(activity=base_activity, status="online")
 		chan = discord.utils.get(guild.text_channels, name="general")
 		await chan.send("```Waking MiniBot!```")
