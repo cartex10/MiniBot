@@ -47,20 +47,20 @@ async def on_ready():
 		n_timer = Timer(notifyTime, notify_timer, args={'chan':chan})
 		chan = discord.utils.get(guild.text_channels, name="manga-updates")
 		m_timer = Timer(mangaTime, manga_timer, args={'chan':chan})
-	chan = discord.utils.get(guild.text_channels, name="menu")
-	user = guild.owner
-	# Send ReminderView in #menu
-	cursor = await getReminders(-1)
-	msg = await chan.send("Please wait one moment...")
-	view = reminderView(bot, msg, user, cursor)
-	await msg.edit(view=view)
-	await view.update()
-	# Send MessageView in #menu
-	cursor = await getMessages(-1)
-	msg = await chan.send("Please wait one moment...")
-	view = messageView(bot, msg, user, cursor)
-	await msg.edit(view=view)
-	await view.update()
+		chan = discord.utils.get(guild.text_channels, name="menu")
+		user = guild.owner
+		# Send ReminderView in #menu
+		cursor = await getReminders(-1)
+		msg = await chan.send("Please wait one moment...")
+		view = reminderView(bot, msg, user, cursor)
+		await msg.edit(view=view)
+		await view.update()
+		# Send MessageView in #menu
+		cursor = await getMessages(-1)
+		msg = await chan.send("Please wait one moment...")
+		view = messageView(bot, msg, user, cursor)
+		await msg.edit(view=view)
+		await view.update()
 
 @bot.slash_command()
 async def reminders(interaction):
