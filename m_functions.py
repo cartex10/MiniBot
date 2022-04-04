@@ -668,9 +668,7 @@ async def manga_timer(args):
 			newChap = await getNewestChapter(i)
 			if newChap != result:
 				# If manga in database has been updated
-				greet = await getRandomMessage(textEnum.greeting.value)
-				msgText = greet + await getRandomMessage(textEnum.manga.value)
-				msgText = msgText[0].upper() + msgText[1:]
+				msgText = await constructMessage(textEnum.manga)
 				embed = discord.Embed().set_image(url=info.get("cover"))
 				await chan.send(msgText.replace("***", info.get("title")).replace("###", newChap), embed=embed)
 				await editManga(i, newChap)
