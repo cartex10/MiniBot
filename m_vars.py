@@ -13,4 +13,4 @@ lowerFreq = 0.125
 personalityOverride = 0.20
 maxTimers = 15
 notifyTime = 603
-mangaTime = 10
+mangaTime = 300
