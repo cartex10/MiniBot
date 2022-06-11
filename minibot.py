@@ -14,21 +14,21 @@
 #		completion message upon reminder deletion
 #	!	add error checking to mandadex api calls
 #
-import nextcord as discord
-from nextcord.ext import commands
+import discord
+from discord.ext import commands
 from dotenv import load_dotenv
 import random, math, time, asyncio, os
 from m_functions import *
 from m_vars import *
 
-print("Starting bot with nextcord.py v" + discord.__version__)
+print("Starting bot with discord.py v" + discord.__version__)
 load_dotenv()
 TOKEN = os.getenv('TOKEN')
 GUILD = int(os.getenv('GUILD'))
 
 base_activity = discord.Activity(type=discord.ActivityType.listening, name="!help")
 intents = discord.Intents.default()
-bot = commands.Bot(command_prefix="!", status="online", activity=base_activity)
+bot = commands.Bot(command_prefix="!", status="online", activity=base_activity, intents=intents)
 
 @bot.event																		#called at bot startup
 async def on_ready():
@@ -62,7 +62,7 @@ async def on_ready():
 		await msg.edit(view=view)
 		await view.update()
 
-@bot.slash_command()
+@bot.command()
 async def reminders(interaction):
 	global con
 	cursor = await getReminders(-1)
@@ -71,7 +71,7 @@ async def reminders(interaction):
 	await interaction.edit_original_message(view=view)
 	await view.update()
 
-@bot.slash_command()
+@bot.command()
 async def messages(interaction):
 	global con
 	cursor = await getMessages(-1)

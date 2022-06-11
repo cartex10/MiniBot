@@ -1,5 +1,5 @@
-import nextcord as discord
-from nextcord.ext import commands
+import discord
+from discord.ext import commands
 import asyncio, sqlite3, random, math, requests, json
 from m_vars import *
 from enum import Enum
@@ -83,7 +83,7 @@ class reminderView(discord.ui.View):
 		msgtext += "```"
 		if sysMsg != None:
 			msgtext += sysMsg
-		await self.msg.edit(msgtext)
+		await self.msg.edit(content=msgtext)
 	@discord.ui.button(label='ᐱ', style=discord.ButtonStyle.secondary)
 	async def up(self, button: discord.ui.Button, interaction: discord.Interaction):
 		self.selected -= 1
@@ -229,7 +229,7 @@ class messageView(discord.ui.View):
 		msgtext += "```"
 		if extra != None:
 			msgtext += extra
-		await self.msg.edit(msgtext)
+		await self.msg.edit(content=msgtext)
 	@discord.ui.button(label='ᐱ', style=discord.ButtonStyle.secondary)
 	async def up(self, button: discord.ui.Button, interaction: discord.Interaction):
 		self.selected -= 1
@@ -647,7 +647,11 @@ async def manga_timer(args):
 	global m_timer
 	chan = args["chan"]
 	# Get list of manga from mangadex custom list
-	response = requests.get("https://api.mangadex.org/list/bd404ab5-d07c-4dfc-b9ba-40e305e7fa47")
+	try:
+		response = requests.get("https://api.mangadex.org/list/bd404ab5-d07c-4dfc-b9ba-40e305e7fa47")
+	except:
+		m_timer = Timer(mangaTime, manga_timer, args={'chan':chan})
+		return
 	mangaIDs = []
 	temp = response.json().get("data").get("relationships")
 	for i in temp:
@@ -678,7 +682,7 @@ async def getNewestChapter(mangaID):
 	try:
 		response = requests.get("https://api.mangadex.org/manga/" + mangaID + "/aggregate")
 	except:
-		pass
+		return None
 	respo = response.json().get("volumes")
 	vols = list(respo)
 	try:
@@ -691,7 +695,7 @@ async def getMangaInfo(mangaID):
 	try:
 		resp = requests.get("https://api.mangadex.org/manga/" + mangaID)
 	except:
-		pass
+		return None
 	if resp.json().get("result") != "ok":
 		return {"errFlag": True}
 	title = list(resp.json().get("data").get("attributes").get("title").values())[0]
@@ -732,7 +736,7 @@ async def checkConnection(chan):
 	except:
 		await msg.edit("```Creating MESSAGES table```")
 		cursor = con.execute("CREATE TABLE MESSAGES (msgText TEXT PRIMARY KEY NOT NULL, msgType INT NOT NULL, msgWeight INT NOT NULL);")
-	await msg.edit("```Connection successful!```")
+	await msg.edit(content="```Connection successful!```")
 
 # Reminders
 async def getReminders(priority):
