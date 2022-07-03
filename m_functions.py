@@ -695,7 +695,7 @@ async def getMangaInfo(mangaID):
 	try:
 		resp = requests.get("https://api.mangadex.org/manga/" + mangaID)
 	except:
-		return None
+		return {"errFlag": True}
 	if resp.json().get("result") != "ok":
 		return {"errFlag": True}
 	title = list(resp.json().get("data").get("attributes").get("title").values())[0]
@@ -724,17 +724,17 @@ async def checkConnection(chan):
 	try:
 		cursor = con.execute("SELECT title, priority FROM REMINDERS")
 	except:
-		await msg.edit("```Creating REMINDERS table```")
+		await msg.edit(content="```Creating REMINDERS table```")
 		cursor = con.execute("CREATE TABLE REMINDERS (title TEXT PRIMARY KEY NOT NULL, priority BOOL NOT NULL);")
 	try:
 		cursor = con.execute("SELECT mangaID, chapterNUM FROM MANGA")
 	except:
-		await msg.edit("```Creating MANGA table```")
+		await msg.edit(content="```Creating MANGA table```")
 		cursor = con.execute("CREATE TABLE MANGA (mangaID TEXT PRIMARY KEY NOT NULL, chapterNUM TEXT NOT NULL);")
 	try:
 		cursor = con.execute("SELECT msgText, msgType FROM MESSAGES")
 	except:
-		await msg.edit("```Creating MESSAGES table```")
+		await msg.edit(content="```Creating MESSAGES table```")
 		cursor = con.execute("CREATE TABLE MESSAGES (msgText TEXT PRIMARY KEY NOT NULL, msgType INT NOT NULL, msgWeight INT NOT NULL);")
 	await msg.edit(content="```Connection successful!```")
 
