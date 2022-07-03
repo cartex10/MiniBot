@@ -28,6 +28,7 @@ GUILD = int(os.getenv('GUILD'))
 
 base_activity = discord.Activity(type=discord.ActivityType.listening, name="!help")
 intents = discord.Intents.default()
+intents.message_content = True
 bot = commands.Bot(command_prefix="!", status="online", activity=base_activity, intents=intents)
 
 @bot.event																		#called at bot startup
