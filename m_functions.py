@@ -85,36 +85,42 @@ class reminderView(discord.ui.View):
 			msgtext += sysMsg
 		await self.msg.edit(content=msgtext)
 	@discord.ui.button(label='ᐱ', style=discord.ButtonStyle.secondary)
-	async def up(self, button: discord.ui.Button, interaction: discord.Interaction):
+	async def up(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		self.selected -= 1
 		if self.selected < 0:
 			self.selected = await countReminders(self.sort) - 1
 		await self.update()
 	@discord.ui.button(label='SORT', style=discord.ButtonStyle.success)
-	async def sort(self, button: discord.ui.Button, interaction: discord.Interaction):
+	async def sort(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		self.selected = 0
 		self.sort += 1
 		if self.sort > 1:
 			self.sort = -1
 		await self.update()
 	@discord.ui.button(label='REFRESH', style=discord.ButtonStyle.success)
-	async def redo(self, button: discord.ui.Button, interaction: discord.Interaction):
+	async def redo(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		await self.update()
 	@discord.ui.button(label='DELETE', style=discord.ButtonStyle.danger)
-	async def delete(self, button: discord.ui.Button, interaction: discord.Interaction):
+	async def delete(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		toDel = self.reminders[self.selected]
 		await deleteReminder(toDel[0], toDel[1])
 		await self.update("Reminder deleted!")
 		if self.selected >=  await countReminders(self.sort) - 1:
 			self.selected = -1
-	@discord.ui.button(label='ᐯ', style=discord.ButtonStyle.secondary, row=2)
-	async def down(self, button: discord.ui.Button, interaction: discord.Interaction):
+	@discord.ui.button(label='ᐯ¹⁰***', style=discord.ButtonStyle.secondary, row=2)
+	async def down(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		if self.selected >=  await countReminders(self.sort) - 1:
 			self.selected = -1
 		self.selected += 1
 		await self.update()
 	@discord.ui.button(label='ADD LP', style=discord.ButtonStyle.primary, row=2)
-	async def addLP(self, button: discord.ui.Button, interaction: discord.Interaction):
+	async def addLP(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		text = "Respond with the new reminder\n"
 		text += "Send 'CANCEL' to create nothing"
 		await self.update(text)
@@ -133,7 +139,8 @@ class reminderView(discord.ui.View):
 			else:
 				await self.update("Cancelling...")
 	@discord.ui.button(label='ADD HP', style=discord.ButtonStyle.primary, row=2)			
-	async def addHP(self, button: discord.ui.Button, interaction: discord.Interaction):
+	async def addHP(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		text = "Respond with the new reminder\n"
 		text += "Send 'CANCEL' to create nothing"
 		await self.update(text)
@@ -231,23 +238,27 @@ class messageView(discord.ui.View):
 			msgtext += extra
 		await self.msg.edit(content=msgtext)
 	@discord.ui.button(label='ᐱ', style=discord.ButtonStyle.secondary)
-	async def up(self, button: discord.ui.Button, interaction: discord.Interaction):
+	async def up(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		self.selected -= 1
 		if self.selected < 0:
 			self.selected = len(self.messages) - 1
 		await self.update()
 	@discord.ui.button(label='SORT', style=discord.ButtonStyle.success)
-	async def sort(self, button: discord.ui.Button, interaction: discord.Interaction):
+	async def sort(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		self.selected = 0
 		self.sort += 1
 		if self.sort >= len(textEnum):
 			self.sort = -1
 		await self.update()
 	@discord.ui.button(label='REFRESH', style=discord.ButtonStyle.success)
-	async def redo(self, button: discord.ui.Button, interaction: discord.Interaction):
+	async def redo(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		await self.update()
 	@discord.ui.button(label='DELETE', style=discord.ButtonStyle.danger)
-	async def delete(self, button: discord.ui.Button, interaction: discord.Interaction):
+	async def delete(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		text = "Are you sure you want to delete the following message? Y/n?\n"
 		text += self.messages[self.selected][0]
 		await self.update(text)
@@ -273,13 +284,15 @@ class messageView(discord.ui.View):
 			else:
 				await self.update("Cancelling...")
 	@discord.ui.button(label='ᐯ', style=discord.ButtonStyle.secondary, row=2)
-	async def down(self, button: discord.ui.Button, interaction: discord.Interaction):
+	async def down(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		if self.selected >= len(self.messages) - 1:
 			self.selected = -1
 		self.selected += 1
 		await self.update()
 	@discord.ui.button(label='ADD PERSN', style=discord.ButtonStyle.primary, row=2)
-	async def addPERSN(self, button: discord.ui.Button, interaction: discord.Interaction):
+	async def addPERSN(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		text = "Respond with the new message template\n"
 		text += "Send 'CANCEL' to create nothing"
 		await self.update(text)
@@ -341,7 +354,8 @@ class messageView(discord.ui.View):
 			else:
 				await self.update("Cancelling...")
 	@discord.ui.button(label='ADD NOTIF', style=discord.ButtonStyle.primary, row=2)
-	async def addNOTIF(self, button: discord.ui.Button, interaction: discord.Interaction):
+	async def addNOTIF(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		text = "Respond with the new message template\n"
 		text += "\\*\\*\\* replaces notification\n"
 		text += "Send 'CANCEL' to create nothing"
@@ -404,7 +418,8 @@ class messageView(discord.ui.View):
 			else:
 				await self.update("Cancelling...")
 	@discord.ui.button(label='ADD MANGA', style=discord.ButtonStyle.primary, row=2)
-	async def addMANGA(self, button: discord.ui.Button, interaction: discord.Interaction):
+	async def addMANGA(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		text = "Respond with the new message template\n"
 		text += "\\*\\*\\* replaces title, ### replaces chapter num\n"
 		text += "Send 'CANCEL' to create nothing"
@@ -467,7 +482,8 @@ class messageView(discord.ui.View):
 			else:
 				await self.update("Cancelling...")
 	@discord.ui.button(label='ADD QUEST', style=discord.ButtonStyle.primary, row=2)
-	async def addQUEST(self, button: discord.ui.Button, interaction: discord.Interaction):
+	async def addQUEST(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		text = "Respond with the new message template\n"
 		text += "\\*\\*\\* replaces notification\n"
 		text += "Send 'CANCEL' to create nothing"
@@ -530,7 +546,8 @@ class messageView(discord.ui.View):
 			else:
 				await self.update("Cancelling...")
 	@discord.ui.button(label='ADD GREET', style=discord.ButtonStyle.primary, row=3)
-	async def addGREET(self, button: discord.ui.Button, interaction: discord.Interaction):
+	async def addGREET(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		text = "Respond with the new message template\n"
 		text += "Send 'CANCEL' to create nothing"
 		await self.update(text)
