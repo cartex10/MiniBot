@@ -1,18 +1,14 @@
 # MiniBot v1.3
 #
 # TODO: ! - priority; * - working on
-#		fix messages not deleting on command use
 #		randomly changing status/presence
 #	!	make high priorities ping user
 #		reminders for dates in the future, ie doctors appointments
 #		mute command
 #		lower time between notifs slightly
-#		in reminderView move TYPE over a bit
-#	!	add up 5 and down 5 buttons
 #	!	make weight array into enum
 #	!	stop sending messages overnight, say goodnight and good morning
 #		completion message upon reminder deletion
-#	!	add error checking to mandadex api calls
 #
 import discord
 from discord.ext import commands

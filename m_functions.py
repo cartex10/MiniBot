@@ -691,22 +691,19 @@ async def manga_timer(args):
 	# Compare newest manga to database
 	for i in mangaIDs:
 		info = await getMangaInfo(i)
-		if info.get("errFlag"):
-			continue
-		result = await findManga(i)
-		if result == -1:
-			# If manga is not in database
-			await addManga(i, await getNewestChapter(i))
-		elif result == "err":
-			continue
-		else:
-			newChap = await getNewestChapter(i)
-			if newChap != result:
-				# If manga in database has been updated
-				msgText = await constructMessage(textEnum.manga)
-				embed = discord.Embed().set_image(url=info.get("cover"))
-				await chan.send(msgText.replace("***", info.get("title")).replace("###", newChap), embed=embed)
-				await editManga(i, newChap)
+		if not info.get("errFlag"):
+			result = await findManga(i)
+			if result == -1:
+				# If manga is not in database
+				await addManga(i, await getNewestChapter(i))
+			elif not result == "err":
+				newChap = await getNewestChapter(i)
+				if newChap != result:
+					# If manga in database has been updated
+					msgText = await constructMessage(textEnum.manga)
+					embed = discord.Embed().set_image(url=info.get("cover"))
+					await chan.send(msgText.replace("***", info.get("title")).replace("###", newChap), embed=embed)
+					await editManga(i, newChap)
 	m_timer = Timer(mangaTime, manga_timer, args={'chan':chan})
 
 async def getNewestChapter(mangaID):
@@ -745,7 +742,7 @@ async def constructMessage(msgType):
 	if greet == "":
 		return msgText[0].upper() + msgText[1:].lower()
 	else:
-		return greet[0].upper() + greet[1:].lower() + " " + msgText.lower()
+		return greet[0].upper() + greet[1:].lower() + " " + msgText[0].lower() + msgText[1:]
 
 ### Database Functions
 async def checkConnection(chan):
