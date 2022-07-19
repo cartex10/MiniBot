@@ -651,6 +651,7 @@ async def notify_timer(args):
 		elif len(reminders) > 0:
 			# Send low priority reminder
 			rem = random.choice(reminders)[0]
+			rem = rem[0].lower() + rem[1:]
 			if rem.endswith('?'):
 				msgText = await constructMessage(textEnum.questioning)
 			else:
@@ -810,6 +811,8 @@ async def findManga(mangaID):
 	cursor = con.execute("SELECT chapterNUM FROM MANGA WHERE mangaID=?", (mangaID,))
 	for manga in cursor.fetchall():
 		out = manga[0]
+	if out == None:
+		return "err"
 	return out
 
 async def editManga(mangaID, chapterNUM):
