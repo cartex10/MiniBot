@@ -710,10 +710,10 @@ async def manga_timer(args):
 async def getNewestChapter(mangaID):
 	try:
 		response = requests.get("https://api.mangadex.org/manga/" + mangaID + "/aggregate")
+		respo = response.json().get("volumes")
+		vols = list(respo)
 	except:
 		return None
-	respo = response.json().get("volumes")
-	vols = list(respo)
 	try:
 		chaps = list(respo.get("none").get("chapters").keys())
 	except:
