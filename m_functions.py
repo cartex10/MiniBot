@@ -678,14 +678,14 @@ async def manga_timer(args):
 	global mangaTime
 	global m_timer
 	chan = args["chan"]
+	mangaIDs = []
 	# Get list of manga from mangadex custom list
 	try:
 		response = requests.get("https://api.mangadex.org/list/bd404ab5-d07c-4dfc-b9ba-40e305e7fa47")
+		temp = response.json().get("data").get("relationships")
 	except:
 		m_timer = Timer(mangaTime, manga_timer, args={'chan':chan})
 		return
-	mangaIDs = []
-	temp = response.json().get("data").get("relationships")
 	for i in temp:
 		if response.json().get("result") == "ok":
 			mangaIDs.append(i.get("id"))
