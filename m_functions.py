@@ -674,7 +674,7 @@ async def notify_timer(args):
 	n_timer = Timer(notifyTime, notify_timer, args={'chan':chan})
 
 async def manga_timer(args):
-	# On "maxTimers"th alarm, check for manga updates
+	# On check for manga updates
 	global mangaTime
 	global m_timer
 	chan = args["chan"]
@@ -732,7 +732,10 @@ async def getMangaInfo(mangaID):
 	cover = "https://uploads.mangadex.org/covers/" + mangaID
 	for i in respo:
 		if i.get("type") == "cover_art":
-			response = requests.get("https://api.mangadex.org/cover/" + i.get("id"))
+			try:
+				response = requests.get("https://api.mangadex.org/cover/" + i.get("id"))
+			except:
+				return {"errFlag": True}
 			cover += "/" + response.json().get("data").get("attributes").get("fileName")
 			break
 	return {"title": title, "cover": cover, "errFlag": False}

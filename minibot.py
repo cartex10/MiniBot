@@ -9,6 +9,7 @@
 #	!	make weight array into enum
 #	!	stop sending messages overnight, say goodnight and good morning
 #		completion message upon reminder deletion
+#		fix constructMessage to not lower if msgText[1] = " "
 #
 import discord
 from discord.ext import commands
@@ -37,7 +38,6 @@ async def on_ready():
 		on_check = True
 		await bot.change_presence(activity=base_activity, status="online")
 		chan = discord.utils.get(guild.text_channels, name="general")
-		await chan.send("```Waking MiniBot!```")
 		await chan.send("Hello! I'm getting ready to help you out!")
 		await checkConnection(chan)
 		chan = discord.utils.get(guild.text_channels, name="notifications")
