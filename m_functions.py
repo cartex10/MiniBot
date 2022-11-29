@@ -699,7 +699,7 @@ async def manga_timer(args):
 				await addManga(i, await getNewestChapter(i))
 			elif not result == "err":
 				newChap = await getNewestChapter(i)
-				if newChap != result:
+				if newChap != result and newChap != None:
 					# If manga in database has been updated
 					msgText = await constructMessage(textEnum.manga)
 					embed = discord.Embed().set_image(url=info.get("cover"))
