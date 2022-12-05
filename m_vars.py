@@ -21,3 +21,27 @@ mangaTime = 300
 ReminderPriorities = []
 ReminderPriorities.append(discord.SelectOption(label="LP", value=0, default=True))
 ReminderPriorities.append(discord.SelectOption(label="HP", value=1))
+
+WeightDescription = "Respond with the messages weight\n"
+for i in ['0', '20', '40', '60', '80', '100']:
+	WeightDescription += i + " - "
+	if i == '0':
+		WeightDescription += "Never used"
+	elif i == '20':
+		WeightDescription += "Fun to see, hard to get"
+	elif i == '40':
+		WeightDescription += "Not too often"
+	elif i == '60':
+		WeightDescription += "idk"
+	elif i == '80':
+		WeightDescription += "Good not too often"
+	elif i == '100':
+		WeightDescription += "Full weight"
+	WeightDescription +='\n'
+
+TemplateTypes = []
+TemplateTypes.append(discord.SelectOption(label="Personal", value=0, default=True))
+TemplateTypes.append(discord.SelectOption(label="Notification", value=1))
+TemplateTypes.append(discord.SelectOption(label="Manga", value=2))
+TemplateTypes.append(discord.SelectOption(label="Questioning", value=3))
+TemplateTypes.append(discord.SelectOption(label="Greeting", value=4))

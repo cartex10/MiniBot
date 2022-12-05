@@ -25,11 +25,24 @@ class reminderModal(discord.ui.Modal, title="Enter Reminder Text"):
 		super().__init__()
 		self.view = view
 		self.priority = priority
+
 	async def on_submit(self, interaction: discord.Interaction):
 		await addReminder(self.text.value, self.priority)
 		await self.view.update("Reminder Added!")
 		await interaction.response.edit_message(view=self.view)
 
+class templateModal(discord.ui.Modal, title="Enter Template Text"):
+	text = discord.ui.TextInput(label='Template', required=True)
+	weight = discord.ui.TextInput(label='Weight', required=True)
+	def __init__(self, view, temptype):
+		super().__init__()
+		self.view = view
+		self.temptype = temptype
+
+	async def on_submit(self, interaction: discord.Interaction):
+		await addTemplate(self.text.value, self.temptype, self.weight.value)
+		await self.view.update("Template Added!")
+		await interaction.response.edit_message(view=self.view)
 
 class reminderView(discord.ui.View):
 	def __init__(self, bot, msg, user, reminders, menutype):
@@ -164,6 +177,7 @@ class templateView(discord.ui.View):
 		self.menutype = menutype
 		self.sort = -1
 		self.selected = 0
+		self.selectedType = 0
 		self.timeout = 0
 	async def on_timeout(self):
 		await self.msg.delete()
@@ -281,15 +295,48 @@ class templateView(discord.ui.View):
 		if self.selected < 0:
 			self.selected = len(self.templates) - 1
 		await self.update()
-	@discord.ui.button(label='SORT', style=discord.ButtonStyle.success)
-	async def sort(self, interaction: discord.Interaction, button: discord.ui.Button):
+	@discord.ui.select(options=TemplateTypes, row=0)
+	async def temsel(self, interaction: discord.Interaction, select: discord.ui.Select):
+		value = int(select.values[0])
+		self.selectedType = value
+		for i in TemplateTypes:
+			if i.value == value:
+				i.default = True
+			else:
+				i.default = False
+		description = ""
+		if value == 1:
+			description = "\\*\\*\\* replaces notification\n\n"
+		elif value == 2:
+			description = "\\*\\*\\* replaces title, ### replaces chapter num\n\n"
+		elif value == 3:
+			description = "\\*\\*\\* replaces notification\n\n"
+		description += WeightDescription
+		await self.update(description)
+		select.options = TemplateTypes
 		await interaction.response.edit_message(view=self)
-		self.selected = 0
-		self.sort += 1
-		if self.sort >= len(textEnum):
-			self.sort = -1
+	@discord.ui.button(label='+', style=discord.ButtonStyle.primary)
+	async def add(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.send_modal(templateModal(view=self, temptype=self.selectedType))
+	@discord.ui.button(label='REFRESH', style=discord.ButtonStyle.success)
+	async def redo(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
 		await self.update()
-	@discord.ui.button(label='DELETE', style=discord.ButtonStyle.danger)
+	@discord.ui.button(label='ᐯ', style=discord.ButtonStyle.secondary, row=2)
+	async def down(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
+		if self.selected + 1 >= len(self.templates):
+			self.selected = -1
+		self.selected += 1
+		await self.update()
+	@discord.ui.button(label='ᐯ₁₀', style=discord.ButtonStyle.secondary, row=2)
+	async def downten(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
+		if self.selected + 10 >= len(self.templates):
+			self.selected = -10
+		self.selected += 10
+		await self.update()
+	@discord.ui.button(label='-', style=discord.ButtonStyle.danger, row=2)
 	async def delete(self, interaction: discord.Interaction, button: discord.ui.Button):
 		await interaction.response.edit_message(view=self)
 		text = "Are you sure you want to delete the following template? Y/n?\n"
@@ -316,342 +363,14 @@ class templateView(discord.ui.View):
 					self.selected = -1
 			else:
 				await self.update("Cancelling...")
-	@discord.ui.button(label='ᐯ', style=discord.ButtonStyle.secondary, row=2)
-	async def down(self, interaction: discord.Interaction, button: discord.ui.Button):
+	@discord.ui.button(label='SORT', style=discord.ButtonStyle.success, row=2)
+	async def sort(self, interaction: discord.Interaction, button: discord.ui.Button):
 		await interaction.response.edit_message(view=self)
-		if self.selected + 1 >= len(self.templates):
-			self.selected = -1
-		self.selected += 1
+		self.selected = 0
+		self.sort += 1
+		if self.sort >= len(textEnum):
+			self.sort = -1
 		await self.update()
-	@discord.ui.button(label='ᐯ₁₀', style=discord.ButtonStyle.secondary, row=2)
-	async def downten(self, interaction: discord.Interaction, button: discord.ui.Button):
-		await interaction.response.edit_message(view=self)
-		if self.selected + 10 >= len(self.templates):
-			self.selected = -10
-		self.selected += 10
-		await self.update()
-	@discord.ui.button(label='REFRESH', style=discord.ButtonStyle.success, row=2)
-	async def redo(self, interaction: discord.Interaction, button: discord.ui.Button):
-		await interaction.response.edit_message(view=self)
-		await self.update()
-	@discord.ui.button(label='ADD PERSN', style=discord.ButtonStyle.primary, row=3)
-	async def addPERSN(self, interaction: discord.Interaction, button: discord.ui.Button):
-		await interaction.response.edit_message(view=self)
-		text = "Respond with the new template template\n"
-		text += "Send 'CANCEL' to create nothing"
-		await self.update(text)
-		def check(m):
-			return m.channel == self.msg.channel
-		try:
-			msg = await self.bot.wait_for('message', check=check, timeout=120)
-		except asyncio.TimeoutError:
-			await self.update("You ran out of time to add the new template, try again")
-		else:
-			content = msg.content
-			try:
-				await msg.delete()
-				await msg.delete()
-				await msg.delete()
-			except:
-				pass
-			if content != "CANCEL":
-				# get input 1 - Message text
-				inp1 = content
-				count = 1
-				string = "Respond with the template's weight\n"
-				for i in ['0', '20', '40', '60', '80', '100']:
-					string += i + " - "
-					if i == '0':
-						string += "Never used"
-					elif i == '20':
-						string += "Fun to see, hard to get"
-					elif i == '40':
-						string += "Not too often"
-					elif i == '60':
-						string += "idk"
-					elif i == '80':
-						string += "Good not too often"
-					elif i == '100':
-						string += "Full weight"
-					string +='\n'
-				string += "Send 'CANCEL' to create nothing"
-				await self.update(string)
-				try:
-					msg = await self.bot.wait_for('message', check=check, timeout=120)
-				except asyncio.TimeoutError:
-					await self.update("You ran out of time to add the new template, try again")
-				else:
-					content = msg.content
-					try:
-						await msg.delete()
-						await msg.delete()
-						await msg.delete()
-					except:
-						pass
-				if content != "CANCEL":
-					# get input 2 - Weight
-					inp2 = content
-					await addTemplate(inp1, textEnum.personality.value, inp2)
-					await self.update("Template added successfully")
-				else:
-					await self.update("Cancelling...")
-			else:
-				await self.update("Cancelling...")
-	@discord.ui.button(label='ADD NOTIF', style=discord.ButtonStyle.primary, row=3)
-	async def addNOTIF(self, interaction: discord.Interaction, button: discord.ui.Button):
-		await interaction.response.edit_message(view=self)
-		text = "Respond with the new template\n"
-		text += "\\*\\*\\* replaces notification\n"
-		text += "Send 'CANCEL' to create nothing"
-		await self.update(text)
-		def check(m):
-			return m.channel == self.msg.channel
-		try:
-			msg = await self.bot.wait_for('message', check=check, timeout=120)
-		except asyncio.TimeoutError:
-			await self.update("You ran out of time to add the new template, try again")
-		else:
-			content = msg.content
-			try:
-				await msg.delete()
-				await msg.delete()
-				await msg.delete()
-			except:
-				pass
-			if content != "CANCEL":
-				# get input 1 - Message text
-				inp1 = content
-				count = 1
-				string = "Respond with the messages weight\n"
-				for i in ['0', '20', '40', '60', '80', '100']:
-					string += i + " - "
-					if i == '0':
-						string += "Never used"
-					elif i == '20':
-						string += "Fun to see, hard to get"
-					elif i == '40':
-						string += "Not too often"
-					elif i == '60':
-						string += "idk"
-					elif i == '80':
-						string += "Good not too often"
-					elif i == '100':
-						string += "Full weight"
-					string +='\n'
-				string += "Send 'CANCEL' to create nothing"
-				await self.update(string)
-				try:
-					msg = await self.bot.wait_for('message', check=check, timeout=120)
-				except asyncio.TimeoutError:
-					await self.update("You ran out of time to add the message template, try again")
-				else:
-					content = msg.content
-					try:
-						await msg.delete()
-						await msg.delete()
-						await msg.delete()
-					except:
-						pass
-				if content != "CANCEL":
-					# get input 2 - Weight
-					inp2 = int(content)
-					await addTemplate(inp1, textEnum.notification.value, inp2)
-					await self.update("Message template added successfully")
-				else:
-					await self.update("Cancelling...")
-			else:
-				await self.update("Cancelling...")
-	@discord.ui.button(label='ADD MANGA', style=discord.ButtonStyle.primary, row=3)
-	async def addMANGA(self, interaction: discord.Interaction, button: discord.ui.Button):
-		await interaction.response.edit_message(view=self)
-		text = "Respond with the new message template\n"
-		text += "\\*\\*\\* replaces title, ### replaces chapter num\n"
-		text += "Send 'CANCEL' to create nothing"
-		await self.update(text)
-		def check(m):
-			return m.channel == self.msg.channel
-		try:
-			msg = await self.bot.wait_for('message', check=check, timeout=120)
-		except asyncio.TimeoutError:
-			await self.update("You ran out of time to add the message template, try again")
-		else:
-			content = msg.content
-			try:
-				await msg.delete()
-				await msg.delete()
-				await msg.delete()
-			except:
-				pass
-			if content != "CANCEL":
-				# get input 1 - Message text
-				inp1 = content
-				count = 1
-				string = "Respond with the messages weight\n"
-				for i in ['0', '20', '40', '60', '80', '100']:
-					string += i + " - "
-					if i == '0':
-						string += "Never used"
-					elif i == '20':
-						string += "Fun to see, hard to get"
-					elif i == '40':
-						string += "Not too often"
-					elif i == '60':
-						string += "idk"
-					elif i == '80':
-						string += "Good not too often"
-					elif i == '100':
-						string += "Full weight"
-					string +='\n'
-				string += "Send 'CANCEL' to create nothing"
-				await self.update(string)
-				try:
-					msg = await self.bot.wait_for('message', check=check, timeout=120)
-				except asyncio.TimeoutError:
-					await self.update("You ran out of time to add the message template, try again")
-				else:
-					content = msg.content
-					try:
-						await msg.delete()
-						await msg.delete()
-						await msg.delete()
-					except:
-						pass
-				if content != "CANCEL":
-					# get input 2 - Weight
-					inp2 = int(content)
-					await addTemplate(inp1, textEnum.manga.value, inp2)
-					await self.update("Message template added successfully")
-				else:
-					await self.update("Cancelling...")
-			else:
-				await self.update("Cancelling...")
-	@discord.ui.button(label='ADD QUEST', style=discord.ButtonStyle.primary, row=4)
-	async def addQUEST(self, interaction: discord.Interaction, button: discord.ui.Button):
-		await interaction.response.edit_message(view=self)
-		text = "Respond with the new message template\n"
-		text += "\\*\\*\\* replaces notification\n"
-		text += "Send 'CANCEL' to create nothing"
-		await self.update(text)
-		def check(m):
-			return m.channel == self.msg.channel
-		try:
-			msg = await self.bot.wait_for('message', check=check, timeout=120)
-		except asyncio.TimeoutError:
-			await self.update("You ran out of time to add the message template, try again")
-		else:
-			content = msg.content
-			try:
-				await msg.delete()
-				await msg.delete()
-				await msg.delete()
-			except:
-				pass
-			if content != "CANCEL":
-				# get input 1 - Message text
-				inp1 = content
-				count = 1
-				string = "Respond with the messages weight\n"
-				for i in ['0', '20', '40', '60', '80', '100']:
-					string += i + " - "
-					if i == '0':
-						string += "Never used"
-					elif i == '20':
-						string += "Fun to see, hard to get"
-					elif i == '40':
-						string += "Not too often"
-					elif i == '60':
-						string += "idk"
-					elif i == '80':
-						string += "Good not too often"
-					elif i == '100':
-						string += "Full weight"
-					string +='\n'
-				string += "Send 'CANCEL' to create nothing"
-				await self.update(string)
-				try:
-					msg = await self.bot.wait_for('message', check=check, timeout=120)
-				except asyncio.TimeoutError:
-					await self.update("You ran out of time to add the message template, try again")
-				else:
-					content = msg.content
-					try:
-						await msg.delete()
-						await msg.delete()
-						await msg.delete()
-					except:
-						pass
-				if content != "CANCEL":
-					# get input 2 - Weight
-					inp2 = int(content)
-					await addTemplate(inp1, textEnum.questioning.value, inp2)
-					await self.update("Message template added successfully")
-				else:
-					await self.update("Cancelling...")
-			else:
-				await self.update("Cancelling...")
-	@discord.ui.button(label='ADD GREET', style=discord.ButtonStyle.primary, row=4)
-	async def addGREET(self, interaction: discord.Interaction, button: discord.ui.Button):
-		await interaction.response.edit_message(view=self)
-		text = "Respond with the new message template\n"
-		text += "Send 'CANCEL' to create nothing"
-		await self.update(text)
-		def check(m):
-			return m.channel == self.msg.channel
-		try:
-			msg = await self.bot.wait_for('message', check=check, timeout=120)
-		except asyncio.TimeoutError:
-			await self.update("You ran out of time to add the message template, try again")
-		else:
-			content = msg.content
-			try:
-				await msg.delete()
-				await msg.delete()
-				await msg.delete()
-			except:
-				pass
-			if content != "CANCEL":
-				# get input 1 - Message text
-				inp1 = content
-				count = 1
-				string = "Respond with the messages weight\n"
-				for i in ['0', '20', '40', '60', '80', '100']:
-					string += i + " - "
-					if i == '0':
-						string += "Never used"
-					elif i == '20':
-						string += "Fun to see, hard to get"
-					elif i == '40':
-						string += "Not too often"
-					elif i == '60':
-						string += "idk"
-					elif i == '80':
-						string += "Good not too often"
-					elif i == '100':
-						string += "Full weight"
-					string +='\n'
-				string += "Send 'CANCEL' to create nothing"
-				await self.update(string)
-				try:
-					msg = await self.bot.wait_for('message', check=check, timeout=120)
-				except asyncio.TimeoutError:
-					await self.update("You ran out of time to add the message template, try again")
-				else:
-					content = msg.content
-					try:
-						await msg.delete()
-						await msg.delete()
-						await msg.delete()
-					except:
-						pass
-				if content != "CANCEL":
-					# get input 2 - Weight
-					inp2 = content
-					await addTemplate(inp1, textEnum.greeting.value, inp2)
-					await self.update("Message template added successfully")
-				else:
-					await self.update("Cancelling...")
-			else:
-				await self.update("Cancelling...")
 
 class textEnum(Enum):
 	personality = 0
