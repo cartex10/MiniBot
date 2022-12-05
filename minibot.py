@@ -52,10 +52,10 @@ async def on_ready():
 		view = reminderView(bot, msg, user, reminder_cursor, MenuType.MAIN)
 		await msg.edit(view=view)
 		await view.update()
-		# Send MessageView in #menu
-		message_cursor = await getMessages(-1)
+		# Send TemplateView in #menu
+		template_cursor = await getTemplates(-1)
 		msg = await chan.send("Please wait one moment...")
-		view = messageView(bot, msg, user, message_cursor, MenuType.MAIN)
+		view = templateView(bot, msg, user, template_cursor, MenuType.MAIN)
 		await msg.edit(view=view)
 		await view.update()
 		# Send ReminderView in #phone-menu
@@ -64,9 +64,9 @@ async def on_ready():
 		view = reminderView(bot, msg, user, reminder_cursor, MenuType.PHONE)
 		await msg.edit(view=view)
 		await view.update()
-		# Send MessageView in #phone-menu
+		# Send TemplateView in #phone-menu
 		msg = await chan.send("Please wait one moment...")
-		view = messageView(bot, msg, user, message_cursor, MenuType.PHONE)
+		view = templateView(bot, msg, user, template_cursor, MenuType.PHONE)
 		await msg.edit(view=view)
 		await view.update()
 
@@ -80,11 +80,11 @@ async def reminders(interaction):
 	await view.update()
 
 @bot.command()
-async def messages(interaction):
+async def templates(interaction):
 	global con
-	cursor = await getMessages(-1)
+	cursor = await getTemplates(-1)
 	await interaction.send("Please wait one moment...")
-	view = messageView(bot, await interaction.original_message(), interaction.user, cursor, MenuType.PHONE)
+	view = templateView(bot, await interaction.original_message(), interaction.user, cursor, MenuType.PHONE)
 	await interaction.edit_original_message(view=view)
 	await view.update()
 

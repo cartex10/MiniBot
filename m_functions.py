@@ -168,13 +168,13 @@ class reminderView(discord.ui.View):
 			else:
 				await self.update("Cancelling...")
 
-class messageView(discord.ui.View):
-	def __init__(self, bot, msg, user, messages, menutype):
+class templateView(discord.ui.View):
+	def __init__(self, bot, msg, user, templates, menutype):
 		super().__init__()
 		self.bot = bot 
 		self.msg = msg
 		self.user = user
-		self.messages = messages
+		self.templates = templates
 		self.menutype = menutype
 		self.sort = -1
 		self.selected = 0
@@ -184,12 +184,12 @@ class messageView(discord.ui.View):
 		self.stop()
 	async def update(self, extra=None):
 		global con
-		self.messages = await getMessages(self.sort)
+		self.templates = await getTemplates(self.sort)
 		if self.menutype == MenuType.MAIN:
 			tabs = "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t"
-			msgtext = "```MESSAGE TEXT" + tabs + "TYPE\t\tWEIGHT\t\tSORT: "
+			msgtext = "```TEMPLATE TEXT" + tabs + "TYPE\t\tWEIGHT\t\tSORT: "
 		elif self.menutype == MenuType.PHONE:
-			msgtext = "```MESSAGE TEXT\t\tSORT: "
+			msgtext = "```TEMPLATE TEXT\t\tSORT: "
 		if self.sort == -1:
 			msgtext += "ALL\n"
 		elif self.sort == textEnum.personality.value:
@@ -205,12 +205,12 @@ class messageView(discord.ui.View):
 		if self.menutype == MenuType.PHONE:
 			msgtext += "\tTYPE\t\tWEIGHT\n"
 		count = max(self.selected - 4, 0)
-		if self.selected > len(self.messages) - 5:
-			count = len(self.messages) - 9
+		if self.selected > len(self.templates) - 5:
+			count = len(self.templates) - 9
 		if count < 0:
 			count = 0
 		startcount = count
-		for msg in self.messages[count:count+9]:
+		for msg in self.templates[count:count+9]:
 			if count == startcount and startcount > 0:
 				msgtext += "...\n"
 			line = ""
@@ -274,7 +274,7 @@ class messageView(discord.ui.View):
 			msgtext += line + "\n"
 			count += 1
 			if count == startcount + 9:
-				if count < len(self.messages):
+				if count < len(self.templates):
 					msgtext += "...\n"
 				break
 		msgtext += "```"
@@ -286,14 +286,14 @@ class messageView(discord.ui.View):
 		await interaction.response.edit_message(view=self)
 		self.selected -= 1
 		if self.selected < 0:
-			self.selected = len(self.messages) - 1
+			self.selected = len(self.templates) - 1
 		await self.update()
 	@discord.ui.button(label='ᐱ¹⁰', style=discord.ButtonStyle.secondary)
 	async def upten(self, interaction: discord.Interaction, button: discord.ui.Button):
 		await interaction.response.edit_message(view=self)
 		self.selected -= 10
 		if self.selected < 0:
-			self.selected = len(self.messages) - 1
+			self.selected = len(self.templates) - 1
 		await self.update()
 	@discord.ui.button(label='SORT', style=discord.ButtonStyle.success)
 	async def sort(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -306,8 +306,8 @@ class messageView(discord.ui.View):
 	@discord.ui.button(label='DELETE', style=discord.ButtonStyle.danger)
 	async def delete(self, interaction: discord.Interaction, button: discord.ui.Button):
 		await interaction.response.edit_message(view=self)
-		text = "Are you sure you want to delete the following message? Y/n?\n"
-		text += self.messages[self.selected][0]
+		text = "Are you sure you want to delete the following template? Y/n?\n"
+		text += self.templates[self.selected][0]
 		await self.update(text)
 		def check(m):
 			return m.channel == self.msg.channel
@@ -324,23 +324,23 @@ class messageView(discord.ui.View):
 			except:
 				pass
 			if content.upper() == "Y":
-				await deleteMessage(self.messages[self.selected][0], self.messages[self.selected][1], self.messages[self.selected][2])
+				await deleteTemplate(self.templates[self.selected][0], self.templates[self.selected][1], self.templates[self.selected][2])
 				await self.update("Message template deleted")
-				if self.selected >= len(self.messages) - 1:
+				if self.selected >= len(self.templates) - 1:
 					self.selected = -1
 			else:
 				await self.update("Cancelling...")
 	@discord.ui.button(label='ᐯ', style=discord.ButtonStyle.secondary, row=2)
 	async def down(self, interaction: discord.Interaction, button: discord.ui.Button):
 		await interaction.response.edit_message(view=self)
-		if self.selected + 1 >= len(self.messages):
+		if self.selected + 1 >= len(self.templates):
 			self.selected = -1
 		self.selected += 1
 		await self.update()
 	@discord.ui.button(label='ᐯ₁₀', style=discord.ButtonStyle.secondary, row=2)
 	async def downten(self, interaction: discord.Interaction, button: discord.ui.Button):
 		await interaction.response.edit_message(view=self)
-		if self.selected + 10 >= len(self.messages):
+		if self.selected + 10 >= len(self.templates):
 			self.selected = -10
 		self.selected += 10
 		await self.update()
@@ -351,7 +351,7 @@ class messageView(discord.ui.View):
 	@discord.ui.button(label='ADD PERSN', style=discord.ButtonStyle.primary, row=3)
 	async def addPERSN(self, interaction: discord.Interaction, button: discord.ui.Button):
 		await interaction.response.edit_message(view=self)
-		text = "Respond with the new message template\n"
+		text = "Respond with the new template template\n"
 		text += "Send 'CANCEL' to create nothing"
 		await self.update(text)
 		def check(m):
@@ -359,7 +359,7 @@ class messageView(discord.ui.View):
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
-			await self.update("You ran out of time to add the message template, try again")
+			await self.update("You ran out of time to add the new template, try again")
 		else:
 			content = msg.content
 			try:
@@ -372,7 +372,7 @@ class messageView(discord.ui.View):
 				# get input 1 - Message text
 				inp1 = content
 				count = 1
-				string = "Respond with the messages weight\n"
+				string = "Respond with the template's weight\n"
 				for i in ['0', '20', '40', '60', '80', '100']:
 					string += i + " - "
 					if i == '0':
@@ -393,7 +393,7 @@ class messageView(discord.ui.View):
 				try:
 					msg = await self.bot.wait_for('message', check=check, timeout=120)
 				except asyncio.TimeoutError:
-					await self.update("You ran out of time to add the message template, try again")
+					await self.update("You ran out of time to add the new template, try again")
 				else:
 					content = msg.content
 					try:
@@ -405,8 +405,8 @@ class messageView(discord.ui.View):
 				if content != "CANCEL":
 					# get input 2 - Weight
 					inp2 = content
-					await addMessage(inp1, textEnum.personality.value, inp2)
-					await self.update("Message template added successfully")
+					await addTemplate(inp1, textEnum.personality.value, inp2)
+					await self.update("Template added successfully")
 				else:
 					await self.update("Cancelling...")
 			else:
@@ -414,7 +414,7 @@ class messageView(discord.ui.View):
 	@discord.ui.button(label='ADD NOTIF', style=discord.ButtonStyle.primary, row=3)
 	async def addNOTIF(self, interaction: discord.Interaction, button: discord.ui.Button):
 		await interaction.response.edit_message(view=self)
-		text = "Respond with the new message template\n"
+		text = "Respond with the new template\n"
 		text += "\\*\\*\\* replaces notification\n"
 		text += "Send 'CANCEL' to create nothing"
 		await self.update(text)
@@ -423,7 +423,7 @@ class messageView(discord.ui.View):
 		try:
 			msg = await self.bot.wait_for('message', check=check, timeout=120)
 		except asyncio.TimeoutError:
-			await self.update("You ran out of time to add the message template, try again")
+			await self.update("You ran out of time to add the new template, try again")
 		else:
 			content = msg.content
 			try:
@@ -469,7 +469,7 @@ class messageView(discord.ui.View):
 				if content != "CANCEL":
 					# get input 2 - Weight
 					inp2 = int(content)
-					await addMessage(inp1, textEnum.notification.value, inp2)
+					await addTemplate(inp1, textEnum.notification.value, inp2)
 					await self.update("Message template added successfully")
 				else:
 					await self.update("Cancelling...")
@@ -533,7 +533,7 @@ class messageView(discord.ui.View):
 				if content != "CANCEL":
 					# get input 2 - Weight
 					inp2 = int(content)
-					await addMessage(inp1, textEnum.manga.value, inp2)
+					await addTemplate(inp1, textEnum.manga.value, inp2)
 					await self.update("Message template added successfully")
 				else:
 					await self.update("Cancelling...")
@@ -597,7 +597,7 @@ class messageView(discord.ui.View):
 				if content != "CANCEL":
 					# get input 2 - Weight
 					inp2 = int(content)
-					await addMessage(inp1, textEnum.questioning.value, inp2)
+					await addTemplate(inp1, textEnum.questioning.value, inp2)
 					await self.update("Message template added successfully")
 				else:
 					await self.update("Cancelling...")
@@ -660,7 +660,7 @@ class messageView(discord.ui.View):
 				if content != "CANCEL":
 					# get input 2 - Weight
 					inp2 = content
-					await addMessage(inp1, textEnum.greeting.value, inp2)
+					await addTemplate(inp1, textEnum.greeting.value, inp2)
 					await self.update("Message template added successfully")
 				else:
 					await self.update("Cancelling...")
@@ -878,13 +878,13 @@ async def getManga():
 		out.append(manga[0])
 	return out
 
-# Message
-async def addMessage(msgText, msgType, msgWeight):
+# Templates
+async def addTemplate(msgText, msgType, msgWeight):
 	global con
 	con.execute("INSERT INTO MESSAGES VALUES (?, ?, ?)", (msgText, msgType, msgWeight))
 	con.commit()
 
-async def getRandomMessage(msgType):
+async def getRandomTemplate(msgType):
 	global con
 	cursor = con.execute("SELECT msgText, msgWeight FROM MESSAGES WHERE msgType=?", (msgType,))
 	msgList = cursor.fetchall()
@@ -904,7 +904,7 @@ async def getRandomMessage(msgType):
 		return ""
 	return msgList[select][0]
 
-async def getMessages(msgType):
+async def getTemplates(msgType):
 	global con
 	if msgType < 0:
 		cursor = con.execute("SELECT msgText, msgWeight, msgType FROM MESSAGES")
@@ -912,7 +912,7 @@ async def getMessages(msgType):
 		cursor = con.execute("SELECT msgText, msgWeight, msgType FROM MESSAGES WHERE msgType=?", (msgType,))
 	return cursor.fetchall()
 
-async def deleteMessage(msgText, msgWeight, msgType):
+async def deleteTemplate(msgText, msgWeight, msgType):
 	global con
 	con.execute("DELETE FROM MESSAGES WHERE msgText=? AND msgWeight=? AND msgType=?", (msgText, msgWeight, msgType))
 	con.commit()
