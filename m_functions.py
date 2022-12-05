@@ -160,12 +160,13 @@ class reminderView(discord.ui.View):
 				await self.update("Cancelling...")
 
 class messageView(discord.ui.View):
-	def __init__(self, bot, msg, user, messages):
+	def __init__(self, bot, msg, user, messages, menutype):
 		super().__init__()
 		self.bot = bot 
 		self.msg = msg
 		self.user = user
 		self.messages = messages
+		self.menutype = menutype
 		self.sort = -1
 		self.selected = 0
 		self.timeout = 0
@@ -175,7 +176,11 @@ class messageView(discord.ui.View):
 	async def update(self, extra=None):
 		global con
 		self.messages = await getMessages(self.sort)
-		msgtext = "```MESSAGE TEXT\t\t\t\tTYPE\t\tWEIGHT\t\tSORT: "
+		if self.menutype == MenuType.MAIN:
+			tabs = "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t"
+			msgtext = "```MESSAGE TEXT" + tabs + "TYPE\t\tWEIGHT\t\tSORT: "
+		elif self.menutype == MenuType.PHONE:
+			msgtext = "```MESSAGE TEXT\t\tSORT: "
 		if self.sort == -1:
 			msgtext += "ALL\n"
 		elif self.sort == textEnum.personality.value:
@@ -188,6 +193,8 @@ class messageView(discord.ui.View):
 			msgtext += "QUEST\n"
 		elif self.sort == textEnum.greeting.value:
 			msgtext += "GREET\n"
+		if self.menutype == MenuType.PHONE:
+			msgtext += "\tTYPE\t\tWEIGHT\n"
 		count = max(self.selected - 4, 0)
 		if self.selected > len(self.messages) - 5:
 			count = len(self.messages) - 9
@@ -197,37 +204,65 @@ class messageView(discord.ui.View):
 		for msg in self.messages[count:count+9]:
 			if count == startcount and startcount > 0:
 				msgtext += "...\n"
+			line = ""
 			if self.selected == count:
-				msgtext += ">> "
-			temp = msg[0]
-			if len(temp) > 15:
-				temp = temp[0:14] + "..."
-			tempLen = len(temp)
-			msgtext += str(count + 1) + ". " + temp
-			if self.selected == count:
-				for i in range(0, math.floor((23 - tempLen) / 4)):
-					msgtext += "\t"
-				for i in range(0, (23 - tempLen) % 4 - 1):
-					msgtext += " "
-			else:
-				for i in range(0, math.floor((26 - tempLen) / 4)):
-					msgtext += "\t"
-				for i in range(0, (26 - tempLen) % 4 - 1):
-					msgtext += " "
+				line += ">> "
+			line += str(count + 1) + ". "
+			db_msg = msg[0]
+			if self.menutype == MenuType.MAIN:
+				max_length = 89
+			if self.menutype == MenuType.PHONE:
+				max_length = 19
+			if len(db_msg) > max_length:
+				db_msg = db_msg[0:max_length] + "..."
+			line += db_msg
+			lineLen = len(line)
+			if self.menutype == MenuType.PHONE:
+				if self.selected == count:
+					for i in range(0, math.floor((29 - lineLen) / 4)):
+						line += "    "
+					for i in range(0, (29 - lineLen) % 4):
+						line += " "
+					line += "<<"
+				msgtext += line + "\n"
+				line = ""
+				if self.selected == count:
+					line += ">>  "
+				else:
+					line += "\t"
+				lineLen = len(line)
+			tabLength = 99
+			if self.menutype == MenuType.MAIN:
+				for i in range(0, math.floor((tabLength - lineLen) / 4)):
+					line += "    "
+				for i in range(0, (tabLength - lineLen) % 4):
+					line += " "
+				if self.selected == count:
+					line += " <<  "
+				else:
+					line += "     "
 			if msg[2] == textEnum.personality.value:
-				msgtext += "PERSN"
+				line += "PERSN"
 			elif msg[2] == textEnum.notification.value:
-				msgtext += "NOTIF"
+				line += "NOTIF"
 			elif msg[2] == textEnum.manga.value:
-				msgtext += "MANGA"
+				line += "MANGA"
 			elif msg[2] == textEnum.questioning.value:
-				msgtext += "QUEST"
+				line += "QUEST"
 			elif msg[2] == textEnum.greeting.value:
-				msgtext += "GREET"
-			msgtext += "\t\t" + str(msg[1])
-			if self.selected == count:
-				msgtext += " << "
-			msgtext += "\n"
+				line += "GREET"
+			line += "         " + str(msg[1])
+			lineLen = len(line)
+			if self.menutype == MenuType.MAIN and self.selected == count:
+				for i in range(0, math.floor((140 - lineLen) / 4)):
+					line += "    "
+				for i in range(0, (140 - lineLen) % 4):
+					line += " "
+			if self.menutype == MenuType.PHONE and self.selected == count:
+				for i in range(0, 3 - len(str(msg[1]))):
+					line += " "
+				line += "        <<"
+			msgtext += line + "\n"
 			count += 1
 			if count == startcount + 9:
 				if count < len(self.messages):
@@ -632,6 +667,9 @@ class textEnum(Enum):
 	#startup = 4
 	#status = 6
 
+class MenuType(Enum):
+	MAIN = 0
+	PHONE = 1
 # Timers
 async def notify_timer(args):
 	# On Alarm, check if a reminder should be sent

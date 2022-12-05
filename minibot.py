@@ -55,7 +55,13 @@ async def on_ready():
 		# Send MessageView in #menu
 		cursor = await getMessages(-1)
 		msg = await chan.send("Please wait one moment...")
-		view = messageView(bot, msg, user, cursor)
+		view = messageView(bot, msg, user, cursor, MenuType.MAIN)
+		await msg.edit(view=view)
+		await view.update()
+		# Send MessageView in #phone-menu
+		chan = discord.utils.get(guild.text_channels, name="phone-menu")
+		msg = await chan.send("Please wait one moment...")
+		view = messageView(bot, msg, user, cursor, MenuType.PHONE)
 		await msg.edit(view=view)
 		await view.update()
 
@@ -73,7 +79,7 @@ async def messages(interaction):
 	global con
 	cursor = await getMessages(-1)
 	await interaction.send("Please wait one moment...")
-	view = messageView(bot, await interaction.original_message(), interaction.user, cursor)
+	view = messageView(bot, await interaction.original_message(), interaction.user, cursor, MenuType.PHONE)
 	await interaction.edit_original_message(view=view)
 	await view.update()
 
