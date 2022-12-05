@@ -20,12 +20,13 @@ class Timer:
 		self._task.cancel()
 
 class reminderView(discord.ui.View):
-	def __init__(self, bot, msg, user, reminders):
+	def __init__(self, bot, msg, user, reminders, menutype):
 		super().__init__()
 		self.bot = bot 
 		self.msg = msg
 		self.user = user
 		self.reminders = reminders
+		self.menutype = menutype
 		self.sort = -1
 		self.selected = 0
 		self.timeout = 0
@@ -35,7 +36,13 @@ class reminderView(discord.ui.View):
 	async def update(self, sysMsg=None):
 		global con
 		self.reminders = await getReminders(self.sort)
-		msgtext = "```CURRENT REMINDERS\t\t\tPRTY\t\tSORT: "
+		if self.menutype == MenuType.MAIN:
+			tabs = "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t "
+			tabs2 = "\t\t"
+		elif self.menutype == MenuType.PHONE:
+			tabs = "\n\t"
+			tabs2 = "\t\t\t"
+		msgtext = "```CURRENT REMINDERS" + tabs + "PRTY" + tabs2 + "SORT: "
 		if self.sort == -1:
 			msgtext += "ALL\n"
 		elif self.sort == 0:
@@ -51,30 +58,32 @@ class reminderView(discord.ui.View):
 		for item in self.reminders[count:count+9]:
 			if count == startcount and startcount > 0:
 				msgtext += "...\n"
+			line = ""
 			if self.selected == count:
-				msgtext += ">> "
-			temp = item[0]
-			if len(temp) > 15:
-				temp = temp[0:14] + "..."
-			tempLen = len(temp)
-			msgtext += str(count + 1) + ". " + temp
-			if self.selected == count:
-				for i in range(0, math.floor((23 - tempLen) / 4)):
-					msgtext += "\t"
-				for i in range(0, (23 - tempLen) % 4 + 1):
-					msgtext += " "
-			else:
-				for i in range(0, math.floor((26 - tempLen) / 4)):
-					msgtext += "\t"
-				for i in range(0, (26 - tempLen) % 4 + 1):
-					msgtext += " "	
+				line += ">> "
+			db_rem = item[0]
+			if self.menutype == MenuType.MAIN:
+				max_length = 106
+			elif self.menutype == MenuType.PHONE:
+				max_length = 20
+			if len(db_rem) > max_length:
+				db_rem = db_rem[0:max_length] + "..."
+			line += str(count + 1) + ". " + db_rem
+			lineLen = len(line)
+			tabLength = 116
+			if self.menutype == MenuType.MAIN:
+				for i in range(0, math.floor((118 - lineLen) / 4)):
+					line += "\t"
+				for i in range(0, (118 - lineLen) % 4 + 1):
+					line += " "
+			elif self.menutype == MenuType.PHONE:
+				msgtext += line + "\n"
+				line = "\t"
 			if not item[1]:
-				msgtext += "LP"
+				line += "LP"
 			elif item[1]:
-				msgtext += "HP"
-			if self.selected == count:
-				msgtext += " << "
-			msgtext += "\n"
+				line += "HP"
+			msgtext += line + "\n"
 			count += 1
 			if count == startcount + 9:
 				if count < len(self.reminders):

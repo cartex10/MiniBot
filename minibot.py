@@ -44,24 +44,29 @@ async def on_ready():
 		n_timer = Timer(notifyTime, notify_timer, args={'chan':chan})
 		chan = discord.utils.get(guild.text_channels, name="manga-updates")
 		m_timer = Timer(mangaTime, manga_timer, args={'chan':chan})
-		chan = discord.utils.get(guild.text_channels, name="menu")
-		user = guild.owner
 		# Send ReminderView in #menu
-		cursor = await getReminders(-1)
+		user = guild.owner
+		chan = discord.utils.get(guild.text_channels, name="menu")
+		reminder_cursor = await getReminders(-1)
 		msg = await chan.send("Please wait one moment...")
-		view = reminderView(bot, msg, user, cursor)
+		view = reminderView(bot, msg, user, reminder_cursor, MenuType.MAIN)
 		await msg.edit(view=view)
 		await view.update()
 		# Send MessageView in #menu
-		cursor = await getMessages(-1)
+		message_cursor = await getMessages(-1)
 		msg = await chan.send("Please wait one moment...")
-		view = messageView(bot, msg, user, cursor, MenuType.MAIN)
+		view = messageView(bot, msg, user, message_cursor, MenuType.MAIN)
+		await msg.edit(view=view)
+		await view.update()
+		# Send ReminderView in #phone-menu
+		chan = discord.utils.get(guild.text_channels, name="phone-menu")
+		msg = await chan.send("Please wait one moment...")
+		view = reminderView(bot, msg, user, reminder_cursor, MenuType.PHONE)
 		await msg.edit(view=view)
 		await view.update()
 		# Send MessageView in #phone-menu
-		chan = discord.utils.get(guild.text_channels, name="phone-menu")
 		msg = await chan.send("Please wait one moment...")
-		view = messageView(bot, msg, user, cursor, MenuType.PHONE)
+		view = messageView(bot, msg, user, message_cursor, MenuType.PHONE)
 		await msg.edit(view=view)
 		await view.update()
 
