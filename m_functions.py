@@ -19,6 +19,18 @@ class Timer:
 	def cancel(self):
 		self._task.cancel()
 
+class reminderModal(discord.ui.Modal, title="Enter Reminder Text"):
+	text = discord.ui.TextInput(label='Reminder')
+	def __init__(self, view, priority):
+		super().__init__()
+		self.view = view
+		self.priority = priority
+	async def on_submit(self, interaction: discord.Interaction):
+		await addReminder(self.text.value, self.priority)
+		await self.view.update("Reminder Added!")
+		await interaction.response.edit_message(view=self.view)
+
+
 class reminderView(discord.ui.View):
 	def __init__(self, bot, msg, user, reminders, menutype):
 		super().__init__()
@@ -29,6 +41,7 @@ class reminderView(discord.ui.View):
 		self.menutype = menutype
 		self.sort = -1
 		self.selected = 0
+		self.selectedPriority = 0
 		self.timeout = 0
 	async def on_timeout(self):
 		await self.msg.delete()
@@ -93,6 +106,16 @@ class reminderView(discord.ui.View):
 		if sysMsg != None:
 			msgtext += sysMsg
 		await self.msg.edit(content=msgtext)
+	@discord.ui.select(options=ReminderPriorities, row=0)
+	async def remsel(self, interaction: discord.Interaction, select: discord.ui.Select):
+		self.selectedPriority = int(select.values[0])
+		for i in ReminderPriorities:
+			if i.value == int(select.values[0]):
+				i.default = True
+			else:
+				i.default = False
+		select.options = ReminderPriorities
+		await interaction.response.edit_message(view=self)
 	@discord.ui.button(label='ᐱ', style=discord.ButtonStyle.secondary)
 	async def up(self, interaction: discord.Interaction, button: discord.ui.Button):
 		await interaction.response.edit_message(view=self)
@@ -100,7 +123,25 @@ class reminderView(discord.ui.View):
 		if self.selected < 0:
 			self.selected = await countReminders(self.sort) - 1
 		await self.update()
-	@discord.ui.button(label='SORT', style=discord.ButtonStyle.success)
+	@discord.ui.button(label='+', style=discord.ButtonStyle.primary)
+	async def addRem(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.send_modal(reminderModal(view=self, priority=self.selectedPriority))
+	@discord.ui.button(label='ᐯ', style=discord.ButtonStyle.secondary, row=2)
+	async def down(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
+		if self.selected >= await countReminders(self.sort) - 1:
+			self.selected = -1
+		self.selected += 1
+		await self.update()
+	@discord.ui.button(label='-', style=discord.ButtonStyle.danger, row=2)
+	async def delete(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
+		toDel = self.reminders[self.selected]
+		await deleteReminder(toDel[0], toDel[1])
+		await self.update("Reminder deleted!")
+		if self.selected >=  await countReminders(self.sort) - 1:
+			self.selected = -1
+	@discord.ui.button(label='SORT', style=discord.ButtonStyle.success, row=2)
 	async def sort(self, interaction: discord.Interaction, button: discord.ui.Button):
 		await interaction.response.edit_message(view=self)
 		self.selected = 0
@@ -112,61 +153,6 @@ class reminderView(discord.ui.View):
 	async def redo(self, interaction: discord.Interaction, button: discord.ui.Button):
 		await interaction.response.edit_message(view=self)
 		await self.update()
-	@discord.ui.button(label='DELETE', style=discord.ButtonStyle.danger)
-	async def delete(self, interaction: discord.Interaction, button: discord.ui.Button):
-		await interaction.response.edit_message(view=self)
-		toDel = self.reminders[self.selected]
-		await deleteReminder(toDel[0], toDel[1])
-		await self.update("Reminder deleted!")
-		if self.selected >=  await countReminders(self.sort) - 1:
-			self.selected = -1
-	@discord.ui.button(label='ᐯ', style=discord.ButtonStyle.secondary, row=2)
-	async def down(self, interaction: discord.Interaction, button: discord.ui.Button):
-		await interaction.response.edit_message(view=self)
-		if self.selected >= await countReminders(self.sort) - 1:
-			self.selected = -1
-		self.selected += 1
-		await self.update()
-	@discord.ui.button(label='ADD LP', style=discord.ButtonStyle.primary, row=2)
-	async def addLP(self, interaction: discord.Interaction, button: discord.ui.Button):
-		await interaction.response.edit_message(view=self)
-		text = "Respond with the new reminder\n"
-		text += "Send 'CANCEL' to create nothing"
-		await self.update(text)
-		def check(m):
-			return m.channel == self.msg.channel
-		try:
-			msg = await self.bot.wait_for('message', check=check, timeout=120)
-		except asyncio.TimeoutError:
-			await self.update("You ran out of time to add the reminder, try again")
-		else:
-			content = msg.content
-			await msg.delete()
-			if content != "CANCEL":
-				await addReminder(content, 0)
-				await self.update("Added Reminder")
-			else:
-				await self.update("Cancelling...")
-	@discord.ui.button(label='ADD HP', style=discord.ButtonStyle.primary, row=2)			
-	async def addHP(self, interaction: discord.Interaction, button: discord.ui.Button):
-		await interaction.response.edit_message(view=self)
-		text = "Respond with the new reminder\n"
-		text += "Send 'CANCEL' to create nothing"
-		await self.update(text)
-		def check(m):
-			return m.channel == self.msg.channel
-		try:
-			msg = await self.bot.wait_for('message', check=check, timeout=120)
-		except asyncio.TimeoutError:
-			await self.update("You ran out of time to add the reminder, try again")
-		else:
-			content = msg.content
-			await msg.delete()
-			if content != "CANCEL":
-				await addReminder(content, 1)
-				await self.update("Added Reminder")
-			else:
-				await self.update("Cancelling...")
 
 class templateView(discord.ui.View):
 	def __init__(self, bot, msg, user, templates, menutype):
@@ -788,8 +774,8 @@ async def getMangaInfo(mangaID):
 	return {"title": title, "cover": cover, "errFlag": False}
 
 async def constructMessage(msgType):
-	greet = await getRandomMessage(textEnum.greeting.value)
-	msgText = await getRandomMessage(msgType.value)
+	greet = await getRandomTemplate(textEnum.greeting.value)
+	msgText = await getRandomTemplate(msgType.value)
 	if greet == "":
 		return msgText[0].upper() + msgText[1:].lower()
 	else:

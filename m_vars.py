@@ -1,3 +1,6 @@
+import discord
+from discord.ext import commands
+
 global timeNoLuck
 global on_check
 global lowerFreq			# Frequency of lower priority reminders 							DEFAULT: lowerFreq = 0.125
@@ -14,3 +17,7 @@ personalityOverride = 0.20
 maxTimers = 15
 notifyTime = 603
 mangaTime = 300
+
+ReminderPriorities = []
+ReminderPriorities.append(discord.SelectOption(label="LP", value=0, default=True))
+ReminderPriorities.append(discord.SelectOption(label="HP", value=1))
