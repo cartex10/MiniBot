@@ -2,7 +2,8 @@ import discord
 from discord.ext import commands
 import asyncio, sqlite3, random, math, requests, json
 from m_vars import *
-from enum import Enum
+import datetime
+from datetime import time, tzinfo, timedelta
 
 # Classes
 class Timer:
@@ -42,6 +43,38 @@ class templateModal(discord.ui.Modal, title="Enter Template Text"):
 	async def on_submit(self, interaction: discord.Interaction):
 		await addTemplate(self.text.value, self.temptype, self.weight.value)
 		await self.view.update("Template Added!")
+		await interaction.response.edit_message(view=self.view)
+
+class alarmModal(discord.ui.Modal, title="Enter Alarm Info"):
+	name = discord.ui.TextInput(label='Name', required=True)
+	alarmDate = discord.ui.TextInput(label='mm/dd/yy', required=True)
+	alarmTime = discord.ui.TextInput(label='hh:mm', required=False)
+	def __init__(self, view, number=None, unit=None):
+		super().__init__()
+		self.view = view
+		self.number = number
+		self.unit = unit
+
+	async def on_submit(self, interaction: discord.Interaction):
+		#try:
+		splitDate = self.alarmDate.value.split("/")
+		if int(splitDate[2]) < 2000:
+			splitDate[2] = int(splitDate[2]) + 2000
+		else:
+			splitDate[2] = int(splitDate[2])
+		convDate = datetime.date(splitDate[2], int(splitDate[0]), int(splitDate[1]))
+		if self.alarmTime.value == None:
+			splitTime = self.alarmTime.value.split(":")
+			convTime = datetime.time(int(splitTime[0]), int(splitTime[1]), tzinfo=EDT)
+		else:
+			convTime = NOON
+		alarmDateTime = datetime.datetime.combine(convDate, convTime)
+		await addAlarm(self.name.value, alarmDateTime, self.number, self.unit)
+		#except:
+			#await self.view.update("Error with input...")
+		#	await interaction.response.edit_message(view=self.view)
+		#	return
+		await self.view.update("Alarm Set!")
 		await interaction.response.edit_message(view=self.view)
 
 class reminderView(discord.ui.View):
@@ -192,15 +225,15 @@ class templateView(discord.ui.View):
 			msgtext = "```TEMPLATE TEXT\t\tSORT: "
 		if self.sort == -1:
 			msgtext += "ALL\n"
-		elif self.sort == textEnum.personality.value:
+		elif self.sort == TextEnum.Personality.value:
 			msgtext += "PERSN\n"
-		elif self.sort == textEnum.notification.value:
+		elif self.sort == TextEnum.Notification.value:
 			msgtext += "NOTIF\n"
-		elif self.sort == textEnum.manga.value:
+		elif self.sort == TextEnum.Manga.value:
 			msgtext += "MANGA\n"
-		elif self.sort == textEnum.questioning.value:
+		elif self.sort == TextEnum.Questioning.value:
 			msgtext += "QUEST\n"
-		elif self.sort == textEnum.greeting.value:
+		elif self.sort == TextEnum.Greeting.value:
 			msgtext += "GREET\n"
 		if self.menutype == MenuType.PHONE:
 			msgtext += "\tTYPE\t\tWEIGHT\n"
@@ -250,15 +283,15 @@ class templateView(discord.ui.View):
 					line += " <<  "
 				else:
 					line += "     "
-			if msg[2] == textEnum.personality.value:
+			if msg[2] == TextEnum.Personality.value:
 				line += "PERSN"
-			elif msg[2] == textEnum.notification.value:
+			elif msg[2] == TextEnum.Notification.value:
 				line += "NOTIF"
-			elif msg[2] == textEnum.manga.value:
+			elif msg[2] == TextEnum.Manga.value:
 				line += "MANGA"
-			elif msg[2] == textEnum.questioning.value:
+			elif msg[2] == TextEnum.Questioning.value:
 				line += "QUEST"
-			elif msg[2] == textEnum.greeting.value:
+			elif msg[2] == TextEnum.Greeting.value:
 				line += "GREET"
 			line += "         " + str(msg[1])
 			lineLen = len(line)
@@ -368,22 +401,170 @@ class templateView(discord.ui.View):
 		await interaction.response.edit_message(view=self)
 		self.selected = 0
 		self.sort += 1
-		if self.sort >= len(textEnum):
+		if self.sort >= len(TextEnum):
 			self.sort = -1
 		await self.update()
 
-class textEnum(Enum):
-	personality = 0
-	notification = 1
-	manga = 2
-	questioning = 3
-	greeting = 4
-	#startup = 4
-	#status = 6
+class alarmView(discord.ui.View):
+	def __init__(self, bot, msg, user, alarms, menutype):
+		super().__init__()
+		self.bot = bot 
+		self.msg = msg
+		self.user = user
+		self.alarms = alarms
+		self.menutype = menutype
+		self.sort = -1
+		self.selected = 0
+		self.selectedNumber = 0
+		self.selectedUnit = 0
+		self.timeout = 0
+	async def on_timeout(self):
+		await self.msg.delete()
+		self.stop()
+	async def update(self, sysMsg=None):
+		global con
+		self.alarms = await getAlarms(self.sort)
+		if self.sort < 0:
+			sortText = "ALL"
+		elif self.sort == 0:
+			sortText = "ONCE"
+		else:
+			sortText = FreqUnit(self.sort).key
+		if self.menutype == MenuType.MAIN:
+			tabs = "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t"
+			tab2 = "\t\t\t\t\t"
+			tab3 = "\t\t\t"
+			msgtext = "```ALARMS" + tabs + "Date" + tab2 + "Frequency" + tab3 + "SORT:" + sortText + "\n"
+		elif self.menutype == MenuType.PHONE:
+			tabs = "\t"
+			tab2 = "\n\t"
+			tab3 = "\n\t"
+			msgtext = "```ALARMS" + tabs + "SORT: "+ sortText + tab2 + "Date" + tab3 + "Frequency\n"
+		count = max(self.selected - 4, 0)
+		if self.selected > len(self.alarms) - 5:
+			count = len(self.alarms) - 9
+		if count < 0:
+			count = 0
+		else:
+			msgtext += "...\n"
+		for alarmList in self.alarms[count:count+9]:
+			line = ""
+			if self.selected == count:
+				line += ">> "
+			alarmName = alarmList[0]
+			alarmDate = datetime.datetime.fromisoformat(alarmList[1])
+			if self.menutype == MenuType.MAIN:
+				max_length = 76
+			elif self.menutype == MenuType.PHONE:
+				max_length = 20
+			if len(alarmName) > max_length:
+				alarmName = alarmName[0:max_length] + "..."
+			line += str(count+1) + ". " + alarmName
+			if self.menutype == MenuType.MAIN:
+				lineLen = len(line)
+				for i in range(0, math.floor((78 - lineLen) / 4)):
+					line += "    "
+				for i in range(0, (78 - lineLen) % 4 + 1):
+					line += " "
+			elif self.menutype == MenuType.PHONE:
+				msgtext += line + "\n"
+				line = "\t"
+			if alarmList[3] == None:
+				#Full
+				line += alarmDate.strftime("%a %m/%d/%y @ %I:%M %p")
+			elif FreqUnit(int(alarmList[3])).name == "W":
+				# Weekday + Time
+				line += alarmDate.strftime("%As @ %I:%M %p")
+			elif FreqUnit(int(alarmList[3])).name == "Y":
+				# mm/dd/yy + Time
+				line += alarmDate.strftime("%m/%d/%y @ %I:%M %p")
+			else:
+				#Full
+				line += alarmDate.strftime("%a %m/%d/%y @ %I:%M %p")
+			if self.menutype == MenuType.MAIN:
+				lineLen = len(line)
+				for i in range(0, math.floor((107 - lineLen) / 4)):
+					line += "\t"
+				for i in range(0, (107 - lineLen) % 4 + 1):
+					line += " "
+			elif self.menutype == MenuType.PHONE:
+				msgtext += line + "\n"
+				line = "\t"
+			if alarmList[2] != None:
+				line += str(alarmList[2]) + " / " + FreqUnit(int(alarmList[3])).name
+			elif self.menutype == MenuType.PHONE:
+				line += "Never Repeat"
+			msgtext += line + "\n"
+			count += 1
+		if count < len(self.alarms):
+			msgtext += "...\n"
+		msgtext += "```"
+		if sysMsg != None:
+			msgtext += sysMsg
+		await self.msg.edit(content=msgtext)
+	@discord.ui.select(options=NumbersOptions, row=0)
+	async def numsel(self, interaction: discord.Interaction, select: discord.ui.Select):
+		self.selectedNumber = int(select.values[0])
+		for i in NumbersOptions:
+			if i.value == int(select.values[0]):
+				i.default = True
+			else:
+				i.default = False
+		select.options = NumbersOptions
+		await interaction.response.edit_message(view=self)
+	@discord.ui.select(options=UnitOptions, row=1)
+	async def unitsel(self, interaction: discord.Interaction, select: discord.ui.Select):
+		self.selectedUnit = int(select.values[0])
+		for i in UnitOptions:
+			if i.value == int(select.values[0]):
+				i.default = True
+			else:
+				i.default = False
+		select.options = UnitOptions
+		await interaction.response.edit_message(view=self)
+	@discord.ui.button(label='ᐱ', style=discord.ButtonStyle.secondary, row=2)
+	async def up(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
+		self.selected -= 1
+		if self.selected < 0:
+			self.selected = len(self.alarms) - 1
+		await self.update()
+	@discord.ui.button(label='+', style=discord.ButtonStyle.primary, row=2)
+	async def addAlarm(self, interaction: discord.Interaction, button: discord.ui.Button):
+		if self.selectedNumber == 0:
+			await interaction.response.send_modal(alarmModal(view=self))
+		else:
+			await interaction.response.send_modal(alarmModal(view=self, number=self.selectedNumber, unit=self.selectedUnit))
+	@discord.ui.button(label='REFRESH', style=discord.ButtonStyle.success, row=2)
+	async def redo(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
+		await self.update()
+	@discord.ui.button(label='ᐯ', style=discord.ButtonStyle.secondary, row=3)
+	async def down(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
+		if self.selected + 1 >= len(self.alarms):
+			self.selected = -1
+		self.selected += 1
+		await self.update()
+	@discord.ui.button(label='-', style=discord.ButtonStyle.danger, row=3)
+	async def delete(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
+		toDel = self.alarms[self.selected]
+		if len(toDel) < 3:
+			toDel[2] = toDel[3] = None
+		await deleteAlarm(toDel[0], toDel[1], toDel[2], toDel[3])
+		await self.update("Alarm deleted!")
+		if self.selected >=  len(self.alarms) - 1:
+			self.selected = -1
+	@discord.ui.button(label='SORT', style=discord.ButtonStyle.success, row=3)
+	async def sort(self, interaction: discord.Interaction, button: discord.ui.Button):
+		await interaction.response.edit_message(view=self)
+		self.selected = 0
+		self.sort += 1
+		if self.sort > 4:
+			self.sort = -1
+		await self.update()
 
-class MenuType(Enum):
-	MAIN = 0
-	PHONE = 1
 # Timers
 async def notify_timer(args):
 	# On Alarm, check if a reminder should be sent
@@ -398,16 +579,16 @@ async def notify_timer(args):
 		reminders = await getReminders(False)
 		if random.random() <= personalityOverride:
 			# Instead of notifying, send personal message
-			msgText = await constructMessage(textEnum.personality)
+			msgText = await constructMessage(TextEnum.Personality)
 			await chan.send(msgText)
 		elif len(reminders) > 0:
 			# Send low priority reminder
 			rem = random.choice(reminders)[0]
 			rem = rem[0].lower() + rem[1:]
 			if rem.endswith('?'):
-				msgText = await constructMessage(textEnum.questioning)
+				msgText = await constructMessage(TextEnum.Questioning)
 			else:
-				msgText = await constructMessage(textEnum.notification)
+				msgText = await constructMessage(TextEnum.Notification)
 			await chan.send(msgText.replace("***", rem), delete_after=360*5)
 		timeNoLuck = 0
 	else:
@@ -418,9 +599,9 @@ async def notify_timer(args):
 		reminders = await getReminders(True)
 		rem = random.choice(reminders)[0]
 		if rem.endswith('?'):
-			msgText = await constructMessage(textEnum.questioning)
+			msgText = await constructMessage(TextEnum.Questioning)
 		else:
-			msgText = await constructMessage(textEnum.notification)
+			msgText = await constructMessage(TextEnum.Notification)
 		await chan.send(msgText.replace("***", rem), delete_after=360*5)
 		timeNoLuck = 0
 	n_timer = Timer(notifyTime, notify_timer, args={'chan':chan})
@@ -453,7 +634,7 @@ async def manga_timer(args):
 				newChap = await getNewestChapter(i)
 				if newChap != result and newChap != None:
 					# If manga in database has been updated
-					msgText = await constructMessage(textEnum.manga)
+					msgText = await constructMessage(TextEnum.manga)
 					embed = discord.Embed().set_image(url=info.get("cover"))
 					await chan.send(msgText.replace("***", info.get("title")).replace("###", newChap), embed=embed)
 					await editManga(i, newChap)
@@ -493,7 +674,7 @@ async def getMangaInfo(mangaID):
 	return {"title": title, "cover": cover, "errFlag": False}
 
 async def constructMessage(msgType):
-	greet = await getRandomTemplate(textEnum.greeting.value)
+	greet = await getRandomTemplate(Text.Greeting.value)
 	msgText = await getRandomTemplate(msgType.value)
 	if greet == "":
 		return msgText[0].upper() + msgText[1:].lower()
@@ -520,6 +701,11 @@ async def checkConnection(chan):
 	except:
 		await msg.edit(content="```Creating MESSAGES table```")
 		cursor = con.execute("CREATE TABLE MESSAGES (msgText TEXT PRIMARY KEY NOT NULL, msgType INT NOT NULL, msgWeight INT NOT NULL);")
+	try:
+		cursor = con.execute("SELECT name, nextDate, waitTime, waitUnit FROM ALARMS")
+	except:
+		await msg.edit(content="```Creating ALARMS table```")
+		cursor = con.execute("CREATE TABLE ALARMS (name TEXT PRIMARY KEY NOT NULL, nextDate DATETIME NOT NULL, waitTime INT, waitUnit CHAR);")
 	await msg.edit(content="```Connection successful!```")
 
 # Reminders
@@ -601,7 +787,7 @@ async def getRandomTemplate(msgType):
 		count += 1
 	if len(randList) == 0:
 		return None
-	if msgType == textEnum.greeting.value:
+	if msgType == TextEnum.Greeting.value:
 		for i in range(0, 100):
 			randList.append(-1)
 	select = random.choice(randList)
@@ -620,4 +806,27 @@ async def getTemplates(msgType):
 async def deleteTemplate(msgText, msgWeight, msgType):
 	global con
 	con.execute("DELETE FROM MESSAGES WHERE msgText=? AND msgWeight=? AND msgType=?", (msgText, msgWeight, msgType))
+	con.commit()
+
+# Alarms
+#async def checkAlarms():
+	
+async def getAlarms(waitUnit):
+	global con
+	if waitUnit < 0:
+		cursor = con.execute("SELECT name, nextDate, waitTime, waitUnit FROM ALARMS")
+	elif waitUnit == 0:
+		cursor = con.execute("SELECT name, nextDate, waitTime, waitUnit FROM ALARMS WHERE waitTime=?, waitUnit=?", (None, None))
+	else:
+		cursor = con.execute("SELECT name, nextDate, waitTime, waitUnit FROM ALARMS WHERE waitUnit=?", (waitUnit,))
+	return cursor.fetchall()
+
+async def addAlarm(name, nextDate, waitTime=None, waitUnit=None):
+	global con
+	con.execute("INSERT INTO ALARMS VALUES (?, ?, ?, ?)", (name, nextDate, waitTime, waitUnit))
+	con.commit()
+
+async def deleteAlarm(name, nextDate, waitTime=None, waitUnit=None):
+	global con
+	con.execute("DELETE FROM ALARMS WHERE name=? AND nextDate=? AND waitTime=? AND waitUnit=?", (name, nextDate, waitTime, waitUnit))
 	con.commit()

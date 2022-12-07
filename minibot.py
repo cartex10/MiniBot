@@ -3,12 +3,10 @@
 # TODO: ! - priority; * - working on
 #		randomly changing status/presence
 #	!	make high priorities ping user
-#		reminders for dates in the future, ie doctors appointments
+#	!	reminders for dates in the future, ie doctors appointments
 #		mute command
 #		lower time between notifs slightly
-#	!	make weight array into enum
 #	!	stop sending messages overnight, say goodnight and good morning
-#		completion message upon reminder deletion
 #		fix constructMessage to not lower if msgText[1] = " "
 #
 import discord
@@ -40,10 +38,12 @@ async def on_ready():
 		chan = discord.utils.get(guild.text_channels, name="general")
 		await chan.send("Hello! I'm getting ready to help you out!")
 		await checkConnection(chan)
+
 		chan = discord.utils.get(guild.text_channels, name="notifications")
 		n_timer = Timer(notifyTime, notify_timer, args={'chan':chan})
 		chan = discord.utils.get(guild.text_channels, name="manga-updates")
 		m_timer = Timer(mangaTime, manga_timer, args={'chan':chan})
+
 		# Send ReminderView in #menu
 		user = guild.owner
 		chan = discord.utils.get(guild.text_channels, name="menu")
@@ -52,21 +52,37 @@ async def on_ready():
 		view = reminderView(bot, msg, user, reminder_cursor, MenuType.MAIN)
 		await msg.edit(view=view)
 		await view.update()
+
 		# Send TemplateView in #menu
 		template_cursor = await getTemplates(-1)
 		msg = await chan.send("Please wait one moment...")
 		view = templateView(bot, msg, user, template_cursor, MenuType.MAIN)
 		await msg.edit(view=view)
 		await view.update()
+
+		# Send AlarmView in #menu
+		alarm_cursor = await getAlarms(-1)
+		msg = await chan.send("Please wait one moment...")
+		view = alarmView(bot, msg, user, alarm_cursor, MenuType.MAIN)
+		await msg.edit(view=view)
+		await view.update()
+
 		# Send ReminderView in #phone-menu
 		chan = discord.utils.get(guild.text_channels, name="phone-menu")
 		msg = await chan.send("Please wait one moment...")
 		view = reminderView(bot, msg, user, reminder_cursor, MenuType.PHONE)
 		await msg.edit(view=view)
 		await view.update()
+
 		# Send TemplateView in #phone-menu
 		msg = await chan.send("Please wait one moment...")
 		view = templateView(bot, msg, user, template_cursor, MenuType.PHONE)
+		await msg.edit(view=view)
+		await view.update()
+
+		# Send AlarmView in #phone-menu
+		msg = await chan.send("Please wait one moment...")
+		view = alarmView(bot, msg, user, alarm_cursor, MenuType.PHONE)
 		await msg.edit(view=view)
 		await view.update()
 
