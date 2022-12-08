@@ -5,16 +5,18 @@ import datetime
 from datetime import time, tzinfo, timedelta
 
 global timeNoLuck
+timeNoLuck = 0
 global on_check
+on_check = False
 global lowerFreq			# Frequency of lower priority reminders 							DEFAULT: lowerFreq = 0.125
 global personalityOverride	# Chance of notifications to be overriden by personality message	DEFAULT: personalityOverride = 0.20
 global maxTimers			# Amount of timers before higher priority reminder 					DEFAULT: maxTimers = 15
 global notifyTime			# Global timer length in seconds 									DEFAULT: notifyTime = 603
 global mangaTime			# Time between manga checks 										DEFAULT: mangaTime = 300
 global con
+global alarmTimers
+alarmTimers = []
 
-timeNoLuck = 0
-on_check = False
 lowerFreq = 0.125
 personalityOverride = 0.20
 maxTimers = 15
@@ -72,7 +74,7 @@ for i in list(TextEnum):
 		TemplateTypes.append(discord.SelectOption(label=i.name, value=i.value))
 
 NumbersOptions = []
-for i in range(0, 9):
+for i in range(0, 10):
 	if i == 0:
 		NumbersOptions.append(discord.SelectOption(label="Never", value=i, default=True))
 	else:

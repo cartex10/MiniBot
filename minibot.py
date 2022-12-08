@@ -24,6 +24,7 @@ GUILD = int(os.getenv('GUILD'))
 base_activity = discord.Activity(type=discord.ActivityType.listening, name="!help")
 intents = discord.Intents.default()
 intents.message_content = True
+intents.members = True
 bot = commands.Bot(command_prefix="!", status="online", activity=base_activity, intents=intents)
 
 @bot.event																		#called at bot startup
@@ -40,6 +41,7 @@ async def on_ready():
 		await checkConnection(chan)
 
 		chan = discord.utils.get(guild.text_channels, name="notifications")
+		await checkAlarms(chan)
 		n_timer = Timer(notifyTime, notify_timer, args={'chan':chan})
 		chan = discord.utils.get(guild.text_channels, name="manga-updates")
 		m_timer = Timer(mangaTime, manga_timer, args={'chan':chan})
@@ -91,7 +93,10 @@ async def reminders(interaction):
 	global con
 	cursor = await getReminders(-1)
 	await interaction.send("Please wait one moment...")
-	view = reminderView(bot, await interaction.original_message(), interaction.user, cursor)
+	if interaction.channel.name == "phone-menu":
+		view = reminderView(bot, await interaction.original_message(), interaction.user, cursor, MenuType.PHONE)
+	else:
+		view = reminderView(bot, await interaction.original_message(), interaction.user, cursor, MenuType.MAIN)
 	await interaction.edit_original_message(view=view)
 	await view.update()
 
@@ -100,7 +105,22 @@ async def templates(interaction):
 	global con
 	cursor = await getTemplates(-1)
 	await interaction.send("Please wait one moment...")
-	view = templateView(bot, await interaction.original_message(), interaction.user, cursor, MenuType.PHONE)
+	if interaction.channel.name == "phone-menu":
+		view = templateView(bot, await interaction.original_message(), interaction.user, cursor, MenuType.PHONE)
+	else:
+		view = templateView(bot, await interaction.original_message(), interaction.user, cursor, MenuType.MAIN)
+	await interaction.edit_original_message(view=view)
+	await view.update()
+
+@bot.command()
+async def alarms(interaction):
+	global con
+	cursor = await getAlarms(-1)
+	await interaction.send("Please wait one moment...")
+	if interaction.channel.name == "phone-menu":
+		view = alarmView(bot, await interaction.original_message(), interaction.user, cursor, MenuType.PHONE)
+	else:
+		view = alarmView(bot, await interaction.original_message(), interaction.user, cursor, MenuType.MAIN)
 	await interaction.edit_original_message(view=view)
 	await view.update()
 

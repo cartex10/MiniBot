@@ -49,31 +49,39 @@ class alarmModal(discord.ui.Modal, title="Enter Alarm Info"):
 	name = discord.ui.TextInput(label='Name', required=True)
 	alarmDate = discord.ui.TextInput(label='mm/dd/yy', required=True)
 	alarmTime = discord.ui.TextInput(label='hh:mm', required=False)
-	def __init__(self, view, number=None, unit=None):
+	def __init__(self, view, chan, number=None, unit=None):
 		super().__init__()
 		self.view = view
 		self.number = number
 		self.unit = unit
+		self.chan = chan
 
 	async def on_submit(self, interaction: discord.Interaction):
-		#try:
-		splitDate = self.alarmDate.value.split("/")
-		if int(splitDate[2]) < 2000:
-			splitDate[2] = int(splitDate[2]) + 2000
-		else:
-			splitDate[2] = int(splitDate[2])
-		convDate = datetime.date(splitDate[2], int(splitDate[0]), int(splitDate[1]))
-		if self.alarmTime.value == None:
-			splitTime = self.alarmTime.value.split(":")
-			convTime = datetime.time(int(splitTime[0]), int(splitTime[1]), tzinfo=EDT)
-		else:
-			convTime = NOON
-		alarmDateTime = datetime.datetime.combine(convDate, convTime)
-		await addAlarm(self.name.value, alarmDateTime, self.number, self.unit)
-		#except:
-			#await self.view.update("Error with input...")
-		#	await interaction.response.edit_message(view=self.view)
-		#	return
+		try:
+			splitDate = self.alarmDate.value.split("/")
+			if int(splitDate[2]) < 2000:
+				splitDate[2] = int(splitDate[2]) + 2000
+			else:
+				splitDate[2] = int(splitDate[2])
+			convDate = datetime.date(splitDate[2], int(splitDate[0]), int(splitDate[1]))
+		except:
+			await self.view.update("Error with the date you selected")
+			await interaction.response.edit_message(view=self.view)
+			return
+		try:
+			if self.alarmTime.value != None:
+				splitTime = self.alarmTime.value.split(":")
+				convTime = datetime.time(int(splitTime[0]), int(splitTime[1]), tzinfo=EDT)
+			else:
+				convTime = NOON
+			alarmDateTime = datetime.datetime.combine(convDate, convTime)
+		except:
+			await self.view.update("Error with the selected time (24hr format)")
+			await interaction.response.edit_message(view=self.view)
+			return
+		alarmID = await getNextID()
+		await addAlarm(alarmID, self.name.value, alarmDateTime, self.number, self.unit)
+		await setAlarm(self.chan, alarmID, self.name.value, alarmDateTime, self.number, self.unit)
 		await self.view.update("Alarm Set!")
 		await interaction.response.edit_message(view=self.view)
 
@@ -531,10 +539,12 @@ class alarmView(discord.ui.View):
 		await self.update()
 	@discord.ui.button(label='+', style=discord.ButtonStyle.primary, row=2)
 	async def addAlarm(self, interaction: discord.Interaction, button: discord.ui.Button):
+		guild = self.msg.guild
+		channel = discord.utils.get(guild.text_channels, name="notifications")
 		if self.selectedNumber == 0:
-			await interaction.response.send_modal(alarmModal(view=self))
+			await interaction.response.send_modal(alarmModal(view=self, chan=channel))
 		else:
-			await interaction.response.send_modal(alarmModal(view=self, number=self.selectedNumber, unit=self.selectedUnit))
+			await interaction.response.send_modal(alarmModal(view=self, number=self.selectedNumber, unit=self.selectedUnit, chan=channel))
 	@discord.ui.button(label='REFRESH', style=discord.ButtonStyle.success, row=2)
 	async def redo(self, interaction: discord.Interaction, button: discord.ui.Button):
 		await interaction.response.edit_message(view=self)
@@ -549,13 +559,11 @@ class alarmView(discord.ui.View):
 	@discord.ui.button(label='-', style=discord.ButtonStyle.danger, row=3)
 	async def delete(self, interaction: discord.Interaction, button: discord.ui.Button):
 		await interaction.response.edit_message(view=self)
-		toDel = self.alarms[self.selected]
-		if len(toDel) < 3:
-			toDel[2] = toDel[3] = None
-		await deleteAlarm(toDel[0], toDel[1], toDel[2], toDel[3])
-		await self.update("Alarm deleted!")
+		deleteID = self.alarms[self.selected][0]
+		await deleteAlarm(deleteID)
 		if self.selected >=  len(self.alarms) - 1:
 			self.selected = -1
+		await self.update("Alarm deleted!")
 	@discord.ui.button(label='SORT', style=discord.ButtonStyle.success, row=3)
 	async def sort(self, interaction: discord.Interaction, button: discord.ui.Button):
 		await interaction.response.edit_message(view=self)
@@ -634,47 +642,42 @@ async def manga_timer(args):
 				newChap = await getNewestChapter(i)
 				if newChap != result and newChap != None:
 					# If manga in database has been updated
-					msgText = await constructMessage(TextEnum.manga)
+					msgText = await constructMessage(TextEnum.Manga)
 					embed = discord.Embed().set_image(url=info.get("cover"))
 					await chan.send(msgText.replace("***", info.get("title")).replace("###", newChap), embed=embed)
 					await editManga(i, newChap)
 	m_timer = Timer(mangaTime, manga_timer, args={'chan':chan})
 
-async def getNewestChapter(mangaID):
-	try:
-		response = requests.get("https://api.mangadex.org/manga/" + mangaID + "/aggregate")
-		respo = response.json().get("volumes")
-		vols = list(respo)
-	except:
-		return None
-	try:
-		chaps = list(respo.get("none").get("chapters").keys())
-	except:
-		chaps = list(respo.get(vols[1]).get("chapters").keys())
-	return chaps[0]
-
-async def getMangaInfo(mangaID):
-	try:
-		resp = requests.get("https://api.mangadex.org/manga/" + mangaID)
-	except:
-		return {"errFlag": True}
-	if resp.json().get("result") != "ok":
-		return {"errFlag": True}
-	title = list(resp.json().get("data").get("attributes").get("title").values())[0]
-	respo = resp.json().get("data").get("relationships")
-	cover = "https://uploads.mangadex.org/covers/" + mangaID
-	for i in respo:
-		if i.get("type") == "cover_art":
-			try:
-				response = requests.get("https://api.mangadex.org/cover/" + i.get("id"))
-			except:
-				return {"errFlag": True}
-			cover += "/" + response.json().get("data").get("attributes").get("fileName")
-			break
-	return {"title": title, "cover": cover, "errFlag": False}
+async def alarm_timer(args):
+	global alarmTimers
+	chan = args["chan"]
+	name = args["name"]
+	alarmID = args["alarmID"]
+	nextDate = args["nextDate"]
+	waitTime = args["waitTime"]
+	waitUnit = args["waitUnit"]
+	# Send message
+	mentionText = "<@&" + str(discord.utils.get(chan.guild.roles, name="Alarms").id) + "> "
+	await chan.send(mentionText + name)
+	# Check if needs to be repeated
+	if waitTime != None:
+		if waitUnit == FreqUnit(1):
+			newDate = nextDate + datetime.timedelta(days=waitTime)
+		if waitUnit == FreqUnit(2):
+			newDate = nextDate + datetime.timedelta(days=waitTime*7)
+		if waitUnit == FreqUnit(3):
+			newDate = nextDate + datetime.timedelta(days=waitTime*30)
+		if waitUnit == FreqUnit(4):
+			newDate = nextDate + datetime.timedelta(days=waitTime*365)
+		await updateAlarm(alarmID, newDate)
+	# Delete if not
+	else:
+		await deleteAlarm(alarmID)
+		if alarmID == len(alarmTimers) - 1:
+			alarmTimers = alarmTimers[:-1]
 
 async def constructMessage(msgType):
-	greet = await getRandomTemplate(Text.Greeting.value)
+	greet = await getRandomTemplate(TextEnum.Greeting.value)
 	msgText = await getRandomTemplate(msgType.value)
 	if greet == "":
 		return msgText[0].upper() + msgText[1:].lower()
@@ -705,7 +708,7 @@ async def checkConnection(chan):
 		cursor = con.execute("SELECT name, nextDate, waitTime, waitUnit FROM ALARMS")
 	except:
 		await msg.edit(content="```Creating ALARMS table```")
-		cursor = con.execute("CREATE TABLE ALARMS (name TEXT PRIMARY KEY NOT NULL, nextDate DATETIME NOT NULL, waitTime INT, waitUnit CHAR);")
+		cursor = con.execute("CREATE TABLE ALARMS (id INT PRIMARY KEY NOT NULL, name TEXT NOT NULL, nextDate DATETIME NOT NULL, waitTime INT, waitUnit CHAR);")
 	await msg.edit(content="```Connection successful!```")
 
 # Reminders
@@ -769,6 +772,39 @@ async def getManga():
 		out.append(manga[0])
 	return out
 
+async def getNewestChapter(mangaID):
+	try:
+		response = requests.get("https://api.mangadex.org/manga/" + mangaID + "/aggregate")
+		respo = response.json().get("volumes")
+		vols = list(respo)
+	except:
+		return None
+	try:
+		chaps = list(respo.get("none").get("chapters").keys())
+	except:
+		chaps = list(respo.get(vols[1]).get("chapters").keys())
+	return chaps[0]
+
+async def getMangaInfo(mangaID):
+	try:
+		resp = requests.get("https://api.mangadex.org/manga/" + mangaID)
+	except:
+		return {"errFlag": True}
+	if resp.json().get("result") != "ok":
+		return {"errFlag": True}
+	title = list(resp.json().get("data").get("attributes").get("title").values())[0]
+	respo = resp.json().get("data").get("relationships")
+	cover = "https://uploads.mangadex.org/covers/" + mangaID
+	for i in respo:
+		if i.get("type") == "cover_art":
+			try:
+				response = requests.get("https://api.mangadex.org/cover/" + i.get("id"))
+			except:
+				return {"errFlag": True}
+			cover += "/" + response.json().get("data").get("attributes").get("fileName")
+			break
+	return {"title": title, "cover": cover, "errFlag": False}
+
 # Templates
 async def addTemplate(msgText, msgType, msgWeight):
 	global con
@@ -809,24 +845,96 @@ async def deleteTemplate(msgText, msgWeight, msgType):
 	con.commit()
 
 # Alarms
-#async def checkAlarms():
-	
+async def checkAlarms(chan):
+	global con
+	global alarmTimers
+	cursor = con.execute("SELECT id, name, nextDate, waitTime, waitUnit FROM ALARMS")
+	alarms = cursor.fetchall()
+	count = 0
+	now = datetime.datetime.now(EDT)
+	today = datetime.date.today()
+	for alarm in alarms:
+		alarmDate = alarm[2]
+		if (alarmDate - now).total_seconds() < 0:
+			if alarm[3] == None:
+				await chan.send("An alarm went off while I was gone! " + alarm[1])
+			else:
+				nextTime = datetime.time(alarmDate.hour, alarmDate.minute, tzinfo=EDT)
+				if alarm[4] == FreqUnit(1): # Fix to go off if time is later that day
+					tempDate = datetime.date(today.year, today.month, today.day + alarm[3])
+				elif alarm[4] == FreqUnit(2):	# Fix to go off on the same weekday
+					tempDate = datetime.date(today.year, today.month, today.day + alarm[3]*7)
+				elif alarm[4] == FreqUnit(3):
+					tempDate = datetime.date(today.year, today.month + alarm[3], alarmDate.day)
+				elif alarm[4] == FreqUnit(4):
+					tempDate = datetime.date(today.year + alarm[3], alarmDate.month, alarmDate.day)
+				alarmDate = datetime.datetime.combine(tempDate, nextTime)
+		if alarm[0] != count:
+			await updateAlarmID(alarm[0], count)
+			await setAlarm(chan, count, alarm[1], alarmDate, int(alarm[3]), alarm[4])
+		else:
+			await setAlarm(chan, int(alarm[0]), alarm[1], alarmDate, int(alarm[3]), alarm[4])
+		count += 1
+
+async def getNextID():
+	global con
+	cursor = con.execute("SELECT id FROM ALARMS")
+	db_ids = cursor.fetchall()
+	ids = []
+	for alarm in db_ids:
+		ids.append(int(alarm[0]))
+	ids.sort()
+	count = -1
+	for i in ids:
+		count += 1
+		if i < 0:
+			continue
+		if i != count:
+			return i
+	return count + 1
+
 async def getAlarms(waitUnit):
 	global con
 	if waitUnit < 0:
 		cursor = con.execute("SELECT name, nextDate, waitTime, waitUnit FROM ALARMS")
-	elif waitUnit == 0:
-		cursor = con.execute("SELECT name, nextDate, waitTime, waitUnit FROM ALARMS WHERE waitTime=?, waitUnit=?", (None, None))
+	elif waitUnit == None:
+		cursor = con.execute("SELECT name, nextDate, waitTime, waitUnit FROM ALARMS WHERE waitUnit=?", (None,))
 	else:
 		cursor = con.execute("SELECT name, nextDate, waitTime, waitUnit FROM ALARMS WHERE waitUnit=?", (waitUnit,))
 	return cursor.fetchall()
 
-async def addAlarm(name, nextDate, waitTime=None, waitUnit=None):
+async def setAlarm(chan, alarmID, name, nextDate, waitTime=None, waitUnit=None):
 	global con
-	con.execute("INSERT INTO ALARMS VALUES (?, ?, ?, ?)", (name, nextDate, waitTime, waitUnit))
+	global alarmTimers
+	cursor = con.execute("SELECT id FROM ALARMS WHERE id!=?", (alarmID,))
+	allAlarms = cursor.fetchall()
+	count = len(allAlarms)
+	delta = nextDate - datetime.datetime.now(EDT)
+	if waitTime != None:
+		args = {'chan':chan, 'alarmID':alarmID, 'name':name, 'nextDate':nextDate, 'waitTime':int(waitTime), 'waitUnit':FreqUnit(waitUnit)}
+	else:
+		args = {'chan':chan, 'alarmID':alarmID, 'name':name, 'nextDate':nextDate, 'waitTime':None, 'waitUnit':None}
+	if alarmID >= count:
+		alarmTimers.append(Timer(delta.total_seconds(), alarm_timer, args))
+	else:
+		alarmTimers[alarmID] = Timer(delta.total_seconds(), alarm_timer, args)
+
+async def addAlarm(alarmID, name, nextDate, waitTime=None, waitUnit=None):
+	global con
+	con.execute("INSERT INTO ALARMS VALUES (?, ?, ?, ?, ?)", (alarmID, name, nextDate, waitTime, waitUnit))
 	con.commit()
 
-async def deleteAlarm(name, nextDate, waitTime=None, waitUnit=None):
+async def deleteAlarm(alarmID):
 	global con
-	con.execute("DELETE FROM ALARMS WHERE name=? AND nextDate=? AND waitTime=? AND waitUnit=?", (name, nextDate, waitTime, waitUnit))
+	con.execute("DELETE FROM ALARMS WHERE id=?", (alarmID,))
+	con.commit()
+
+async def updateAlarm(alarmID, nextDate):
+	global con
+	cursor = con.execute("UPDATE ALARMS SET nextDate=? WHERE id=?", (nextDate, alarmID))
+	con.commit()
+
+async def updateAlarmID(alarmID, newID):
+	global con
+	cursor = con.execute("UPDATE ALARMS SET id=? WHERE id=?", (newID, alarmID))
 	con.commit()
