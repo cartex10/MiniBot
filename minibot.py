@@ -3,9 +3,7 @@
 # TODO: ! - priority; * - working on
 #		randomly changing status/presence
 #	!	make high priorities ping user
-#	!	reminders for dates in the future, ie doctors appointments
 #		mute command
-#		lower time between notifs slightly
 #	!	stop sending messages overnight, say goodnight and good morning
 #		fix constructMessage to not lower if msgText[1] = " "
 #
@@ -33,15 +31,15 @@ async def on_ready():
 	global notifyTime
 	global mangaTime
 	guild = bot.get_guild(GUILD)
+	chan = discord.utils.get(guild.text_channels, name="general")
+	await checkConnection(chan)
+	await checkAlarms(chan)
 	if on_check is not True:
 		on_check = True
 		await bot.change_presence(activity=base_activity, status="online")
-		chan = discord.utils.get(guild.text_channels, name="general")
 		await chan.send("Hello! I'm getting ready to help you out!")
-		await checkConnection(chan)
 
 		chan = discord.utils.get(guild.text_channels, name="notifications")
-		await checkAlarms(chan)
 		n_timer = Timer(notifyTime, notify_timer, args={'chan':chan})
 		chan = discord.utils.get(guild.text_channels, name="manga-updates")
 		m_timer = Timer(mangaTime, manga_timer, args={'chan':chan})

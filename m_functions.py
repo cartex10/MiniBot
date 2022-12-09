@@ -69,7 +69,7 @@ class alarmModal(discord.ui.Modal, title="Enter Alarm Info"):
 			await interaction.response.edit_message(view=self.view)
 			return
 		try:
-			if self.alarmTime.value != None:
+			if self.alarmTime.value != "":
 				splitTime = self.alarmTime.value.split(":")
 				convTime = datetime.time(int(splitTime[0]), int(splitTime[1]), tzinfo=EDT)
 			else:
@@ -80,10 +80,17 @@ class alarmModal(discord.ui.Modal, title="Enter Alarm Info"):
 			await interaction.response.edit_message(view=self.view)
 			return
 		alarmID = await getNextID()
-		await addAlarm(alarmID, self.name.value, alarmDateTime, self.number, self.unit)
-		await setAlarm(self.chan, alarmID, self.name.value, alarmDateTime, self.number, self.unit)
+		if self.number == None:
+			await addAlarm(alarmID, self.name.value, alarmDateTime)
+			await setAlarm(self.chan, alarmID, self.name.value, alarmDateTime)
+		else:
+			await addAlarm(alarmID, self.name.value, alarmDateTime, self.number, self.unit)
+			await setAlarm(self.chan, alarmID, self.name.value, alarmDateTime, self.number, FreqUnit(self.unit))
 		await self.view.update("Alarm Set!")
 		await interaction.response.edit_message(view=self.view)
+
+	async def on_error(self, interaction: discord.Interaction, error):
+		self.stop()
 
 class reminderView(discord.ui.View):
 	def __init__(self, bot, msg, user, reminders, menutype):
@@ -455,12 +462,12 @@ class alarmView(discord.ui.View):
 			count = 0
 		else:
 			msgtext += "...\n"
-		for alarmList in self.alarms[count:count+9]:
+		for alarm in self.alarms[count:count+9]:
 			line = ""
 			if self.selected == count:
 				line += ">> "
-			alarmName = alarmList[0]
-			alarmDate = datetime.datetime.fromisoformat(alarmList[1])
+			alarmName = alarm.get('name')
+			alarmDate = alarm.get('nextDate')
 			if self.menutype == MenuType.MAIN:
 				max_length = 76
 			elif self.menutype == MenuType.PHONE:
@@ -477,13 +484,13 @@ class alarmView(discord.ui.View):
 			elif self.menutype == MenuType.PHONE:
 				msgtext += line + "\n"
 				line = "\t"
-			if alarmList[3] == None:
+			if alarm.get('waitTime') == None:
 				#Full
 				line += alarmDate.strftime("%a %m/%d/%y @ %I:%M %p")
-			elif FreqUnit(int(alarmList[3])).name == "W":
+			elif alarm.get('waitUnit').name == "W":
 				# Weekday + Time
 				line += alarmDate.strftime("%As @ %I:%M %p")
-			elif FreqUnit(int(alarmList[3])).name == "Y":
+			elif alarm.get('waitUnit').name == "Y":
 				# mm/dd/yy + Time
 				line += alarmDate.strftime("%m/%d/%y @ %I:%M %p")
 			else:
@@ -498,8 +505,8 @@ class alarmView(discord.ui.View):
 			elif self.menutype == MenuType.PHONE:
 				msgtext += line + "\n"
 				line = "\t"
-			if alarmList[2] != None:
-				line += str(alarmList[2]) + " / " + FreqUnit(int(alarmList[3])).name
+			if alarm.get('waitTime') != None:
+				line += str(alarm.get('waitTime')) + " / " + alarm.get('waitUnit').name
 			elif self.menutype == MenuType.PHONE:
 				line += "Never Repeat"
 			msgtext += line + "\n"
@@ -559,8 +566,9 @@ class alarmView(discord.ui.View):
 	@discord.ui.button(label='-', style=discord.ButtonStyle.danger, row=3)
 	async def delete(self, interaction: discord.Interaction, button: discord.ui.Button):
 		await interaction.response.edit_message(view=self)
-		deleteID = self.alarms[self.selected][0]
+		deleteID = int(self.alarms[self.selected].get('id'))
 		await deleteAlarm(deleteID)
+		await unsetAlarm(deleteID)
 		if self.selected >=  len(self.alarms) - 1:
 			self.selected = -1
 		await self.update("Alarm deleted!")
@@ -569,7 +577,7 @@ class alarmView(discord.ui.View):
 		await interaction.response.edit_message(view=self)
 		self.selected = 0
 		self.sort += 1
-		if self.sort > 4:
+		if self.sort > len(list(FreqUnit)):
 			self.sort = -1
 		await self.update()
 
@@ -653,22 +661,39 @@ async def alarm_timer(args):
 	chan = args["chan"]
 	name = args["name"]
 	alarmID = args["alarmID"]
-	nextDate = args["nextDate"]
 	waitTime = args["waitTime"]
 	waitUnit = args["waitUnit"]
+	adjust = args["adjust"]
 	# Send message
 	mentionText = "<@&" + str(discord.utils.get(chan.guild.roles, name="Alarms").id) + "> "
 	await chan.send(mentionText + name)
 	# Check if needs to be repeated
 	if waitTime != None:
+		now = datetime.datetime.now(tz=EDT)
 		if waitUnit == FreqUnit(1):
-			newDate = nextDate + datetime.timedelta(days=waitTime)
-		if waitUnit == FreqUnit(2):
-			newDate = nextDate + datetime.timedelta(days=waitTime*7)
-		if waitUnit == FreqUnit(3):
-			newDate = nextDate + datetime.timedelta(days=waitTime*30)
-		if waitUnit == FreqUnit(4):
-			newDate = nextDate + datetime.timedelta(days=waitTime*365)
+			newDate = now + datetime.timedelta(days=waitTime)
+		elif waitUnit == FreqUnit(2):
+			newDate = now + datetime.timedelta(days=waitTime*7)
+		elif waitUnit == FreqUnit(3):
+			try:
+				if now.month + waitTime > 12:
+					month = now.month + waitTime - 12
+					newDate = now.replace(year=now.year+1, month=month)
+				else:
+					month = now.month+waitTime
+					newDate = now.replace(month=month)
+				if adjust:
+					newDate = newDate + datetime.timedelta(days=5)
+					adjust = await editAlarmAdjustment(alarmID, False)
+			except ValueError:
+				adjust = await editAlarmAdjustment(alarmID, True)
+				newDate = now.replace(month=month, day=now.day-5)
+		elif waitUnit == FreqUnit(4):
+			try:
+				newDate = now.replace(year=now.year+waitTime)
+			except ValueError:
+				newDate = now.replace(year=now.year+waitTime, day=now.day-1)
+		await setAlarm(chan, alarmID, name, newDate, waitTime, waitUnit, adjust)
 		await updateAlarm(alarmID, newDate)
 	# Delete if not
 	else:
@@ -708,7 +733,7 @@ async def checkConnection(chan):
 		cursor = con.execute("SELECT name, nextDate, waitTime, waitUnit FROM ALARMS")
 	except:
 		await msg.edit(content="```Creating ALARMS table```")
-		cursor = con.execute("CREATE TABLE ALARMS (id INT PRIMARY KEY NOT NULL, name TEXT NOT NULL, nextDate DATETIME NOT NULL, waitTime INT, waitUnit CHAR);")
+		cursor = con.execute("CREATE TABLE ALARMS (id INT PRIMARY KEY NOT NULL, name TEXT NOT NULL, nextDate DATETIME NOT NULL, waitTime INT, waitUnit INT, adjust BOOL DEFAULT False);")
 	await msg.edit(content="```Connection successful!```")
 
 # Reminders
@@ -846,35 +871,74 @@ async def deleteTemplate(msgText, msgWeight, msgType):
 
 # Alarms
 async def checkAlarms(chan):
-	global con
 	global alarmTimers
-	cursor = con.execute("SELECT id, name, nextDate, waitTime, waitUnit FROM ALARMS")
-	alarms = cursor.fetchall()
+	alarms = await getAlarms(-1)
 	count = 0
-	now = datetime.datetime.now(EDT)
-	today = datetime.date.today()
+	now = datetime.datetime.now(tz=EDT)
+	lateText = ""
 	for alarm in alarms:
-		alarmDate = alarm[2]
-		if (alarmDate - now).total_seconds() < 0:
-			if alarm[3] == None:
-				await chan.send("An alarm went off while I was gone! " + alarm[1])
+		# Iterate through every alarm in db
+		adjust = False
+		alarmID = alarm.get("id")
+		alarmDate = alarm.get("nextDate")
+		alarmFreq = alarm.get("waitTime")
+		alarmUnit = alarm.get("waitUnit")
+		if (now - alarmDate).total_seconds() > 0:
+			# Notify about alarms that already occurred
+			if lateText == "":
+				lateText = "An alarm went off while I was gone!\n\t" + alarm.get("name")
+			elif lateText.startswith("An"):
+				lateText = "A few alarms went off while I was gone! Here they are...\n\t" + lateText[37:] + "\n\t" + alarm.get("name")
 			else:
+				lateText += "\n\t" + alarm.get("name")
+			if alarmFreq == None:
+				# Remove unique alarms
+				await deleteAlarm(alarmID)
+				continue
+			else:
+				# Repeat necessary alarms
 				nextTime = datetime.time(alarmDate.hour, alarmDate.minute, tzinfo=EDT)
-				if alarm[4] == FreqUnit(1): # Fix to go off if time is later that day
-					tempDate = datetime.date(today.year, today.month, today.day + alarm[3])
-				elif alarm[4] == FreqUnit(2):	# Fix to go off on the same weekday
-					tempDate = datetime.date(today.year, today.month, today.day + alarm[3]*7)
-				elif alarm[4] == FreqUnit(3):
-					tempDate = datetime.date(today.year, today.month + alarm[3], alarmDate.day)
-				elif alarm[4] == FreqUnit(4):
-					tempDate = datetime.date(today.year + alarm[3], alarmDate.month, alarmDate.day)
-				alarmDate = datetime.datetime.combine(tempDate, nextTime)
-		if alarm[0] != count:
-			await updateAlarmID(alarm[0], count)
-			await setAlarm(chan, count, alarm[1], alarmDate, int(alarm[3]), alarm[4])
+				if alarmUnit == FreqUnit(1):
+					delta = datetime.timedelta(days=alarmFreq)
+					while (now - alarmDate).total_seconds() > 0:
+						alarmDate = alarmDate + delta
+				elif alarmUnit == FreqUnit(2):
+					delta = datetime.timedelta(days=alarmFreq*7)
+					while (now - alarmDate).total_seconds() > 0:
+						alarmDate = alarmDate + delta
+				elif alarmUnit == FreqUnit(3):
+					while (now - alarmDate).total_seconds() > 0:
+						try:
+							if alarmDate.month + alarmFreq > 12:
+								month = alarmDate.month + alarmFreq - 12
+								alarmDate = datetime.date(alarmDate.year + 1, month, alarmDate.day)
+							else:
+								alarmDate = datetime.date(alarmDate.year, alarmDate.month + alarmFreq, alarmDate.day)
+							if adjust:
+								adjust = await editAlarmAdjustment(alarmID, False)
+								alarmDate = alarmDate + datetime.timedelta(days=5)
+						except ValueError:
+							adjust = await editAlarmAdjustment(alarmID, True)
+							alarmDate = datetime.date(alarmDate.year, alarmDate.month + alarmFreq, alarmDate.day - 5)
+						alarmDate = datetime.datetime.combine(alarmDate, nextTime)
+				elif alarmUnit == FreqUnit(4):
+					while (now - alarmDate).total_seconds() > 0:
+						try:
+							alarmDate = datetime.date(alarmDate.year + alarmFreq, alarmDate.month, alarmDate.day)
+						except ValueError:
+							alarmDate = datetime.date(alarmDate.year + alarmFreq, alarmDate.month, alarmDate.day-1)
+						alarmDate = datetime.datetime.combine(alarmDate, nextTime)
+				await updateAlarm(alarmID, alarmDate)
+		if alarmID != count:
+			# If ID and index are desynced, fix
+			await updateAlarmID(alarmID, count)
+			await setAlarm(chan, count, alarm.get("name"), alarmDate, alarmFreq, alarmUnit, adjust)
 		else:
-			await setAlarm(chan, int(alarm[0]), alarm[1], alarmDate, int(alarm[3]), alarm[4])
+			await setAlarm(chan, alarmID, alarm.get("name"), alarmDate, alarmFreq, alarmUnit, adjust)
 		count += 1
+	if lateText != "":
+		# Notify about missed alarms
+		await chan.send(lateText)
 
 async def getNextID():
 	global con
@@ -896,32 +960,42 @@ async def getNextID():
 async def getAlarms(waitUnit):
 	global con
 	if waitUnit < 0:
-		cursor = con.execute("SELECT name, nextDate, waitTime, waitUnit FROM ALARMS")
+		cursor = con.execute("SELECT id, name, nextDate, waitTime, waitUnit FROM ALARMS")
 	elif waitUnit == None:
-		cursor = con.execute("SELECT name, nextDate, waitTime, waitUnit FROM ALARMS WHERE waitUnit=?", (None,))
+		cursor = con.execute("SELECT id, name, nextDate, waitTime, waitUnit FROM ALARMS WHERE waitUnit=?", (None,))
 	else:
-		cursor = con.execute("SELECT name, nextDate, waitTime, waitUnit FROM ALARMS WHERE waitUnit=?", (waitUnit,))
-	return cursor.fetchall()
+		cursor = con.execute("SELECT id, name, nextDate, waitTime, waitUnit FROM ALARMS WHERE waitUnit=?", (waitUnit,))
+	cursor = cursor.fetchall()
+	returnList = []
+	for i in cursor:
+		if i[3] == None:
+			temp = {"id":int(i[0]), "name":i[1], "nextDate":datetime.datetime.fromisoformat(i[2]), "waitTime":None, "waitUnit":None}
+		else:
+			temp = {"id":int(i[0]), "name":i[1], "nextDate":datetime.datetime.fromisoformat(i[2]), "waitTime":int(i[3]), "waitUnit":FreqUnit(int(i[4]))}
+		returnList.append(temp)
+	return returnList
 
-async def setAlarm(chan, alarmID, name, nextDate, waitTime=None, waitUnit=None):
-	global con
+async def setAlarm(chan, alarmID, name, nextDate, waitTime=None, waitUnit=None, adjust=False):
 	global alarmTimers
-	cursor = con.execute("SELECT id FROM ALARMS WHERE id!=?", (alarmID,))
-	allAlarms = cursor.fetchall()
-	count = len(allAlarms)
-	delta = nextDate - datetime.datetime.now(EDT)
+	delta = nextDate - datetime.datetime.now(tz=EDT)
 	if waitTime != None:
-		args = {'chan':chan, 'alarmID':alarmID, 'name':name, 'nextDate':nextDate, 'waitTime':int(waitTime), 'waitUnit':FreqUnit(waitUnit)}
+		args = {'chan':chan, 'alarmID':alarmID, 'name':name, 'waitTime':int(waitTime), 'waitUnit':waitUnit, 'adjust':adjust}
 	else:
-		args = {'chan':chan, 'alarmID':alarmID, 'name':name, 'nextDate':nextDate, 'waitTime':None, 'waitUnit':None}
-	if alarmID >= count:
+		args = {'chan':chan, 'alarmID':alarmID, 'name':name, 'waitTime':None, 'waitUnit':None, 'adjust':adjust}
+	if alarmID >= len(alarmTimers):
 		alarmTimers.append(Timer(delta.total_seconds(), alarm_timer, args))
 	else:
 		alarmTimers[alarmID] = Timer(delta.total_seconds(), alarm_timer, args)
 
+async def unsetAlarm(alarmID):
+	global alarmTimers
+	alarmTimers[alarmID].cancel()
+	if alarmID == len(alarmTimers) - 1:
+		alarmTimers = alarmTimers[:-1]
+
 async def addAlarm(alarmID, name, nextDate, waitTime=None, waitUnit=None):
 	global con
-	con.execute("INSERT INTO ALARMS VALUES (?, ?, ?, ?, ?)", (alarmID, name, nextDate, waitTime, waitUnit))
+	con.execute("INSERT INTO ALARMS VALUES (?, ?, ?, ?, ?, False)", (alarmID, name, nextDate, waitTime, waitUnit))
 	con.commit()
 
 async def deleteAlarm(alarmID):
@@ -938,3 +1012,9 @@ async def updateAlarmID(alarmID, newID):
 	global con
 	cursor = con.execute("UPDATE ALARMS SET id=? WHERE id=?", (newID, alarmID))
 	con.commit()
+
+async def editAlarmAdjustment(alarmID, adjust):
+	global con
+	cursor = con.execute("UPDATE ALARMS SET adjust=? WHERE id=?", (adjust, alarmID))
+	con.commit()
+	return adjust
