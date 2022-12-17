@@ -38,7 +38,15 @@ async def on_ready():
 		chan = discord.utils.get(guild.text_channels, name="general")
 		await checkConnection(chan)
 		await bot.change_presence(activity=base_activity, status="online")
-		await chan.send("Hello! I'm getting ready to help you out!")
+		msg = await chan.send("Hello! I'm getting ready to help you out!")
+		
+		# Clean guild
+		channels = ["menu", "phone-menu", "notifications"]
+		category = discord.utils.get(guild.categories, name="Bot Channels")
+		for chan in channels:
+			toDel = discord.utils.get(guild.text_channels, name=chan)
+			await toDel.delete()
+			await guild.create_text_channel(name=chan, category=category, position=0)
 
 		# Setup Notifications/ Alarms
 		chan = discord.utils.get(guild.text_channels, name="notifications")
@@ -126,6 +134,18 @@ async def alarms(ctx):
 		view = alarmView(bot, msg, ctx.author, cursor, MenuType.MAIN)
 	await msg.edit(view=view)
 	await view.update()
+
+@bot.hybrid_command()
+async def clean(ctx):
+	guild = bot.get_guild(GUILD)
+	channels = ["menu", "phone-menu", "notifications"]
+	category = discord.utils.get(guild.categories, name="Bot Channels")
+	for chan in channels:
+		toDel = discord.utils.get(guild.text_channels, name=chan)
+		await toDel.delete()
+		await guild.create_text_channel(name=chan, category=category, position=0)
+	chan = discord.utils.get(guild.text_channels, name="notifications")
+	await chan.send("Just finished cleaning up!")
 
 @bot.check
 async def check_commands(ctx):
