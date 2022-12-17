@@ -458,7 +458,7 @@ class alarmView(discord.ui.View):
 		count = max(self.selected - 4, 0)
 		if self.selected > len(self.alarms) - 5:
 			count = len(self.alarms) - 9
-		if count < 0:
+		if count <= 0:
 			count = 0
 		else:
 			msgtext += "...\n"
@@ -693,6 +693,9 @@ async def alarm_timer(args):
 				newDate = now.replace(year=now.year+waitTime)
 			except ValueError:
 				newDate = now.replace(year=now.year+waitTime, day=now.day-1)
+		else:
+			print("\n\n\n\nError: Should not be arriving at 'Else' statement on line 697\n\n\n\n")
+			return
 		await setAlarm(chan, alarmID, name, newDate, waitTime, waitUnit, adjust)
 		await updateAlarm(alarmID, newDate)
 	# Delete if not
@@ -928,6 +931,8 @@ async def checkAlarms(chan):
 						except ValueError:
 							alarmDate = datetime.date(alarmDate.year + alarmFreq, alarmDate.month, alarmDate.day-1)
 						alarmDate = datetime.datetime.combine(alarmDate, nextTime)
+				else:
+					print("\n\n\n\nError: Should not be arriving at 'Else' statement on line 697\n\n\n\n")
 				await updateAlarm(alarmID, alarmDate)
 		if alarmID != count:
 			# If ID and index are desynced, fix

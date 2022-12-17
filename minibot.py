@@ -20,9 +20,9 @@ TOKEN = os.getenv('TOKEN')
 GUILD = int(os.getenv('GUILD'))
 
 base_activity = discord.Activity(type=discord.ActivityType.listening, name="!help")
-intents = discord.Intents.default()
-intents.message_content = True
-intents.members = True
+intents = discord.Intents.all()
+#intents.message_content = True
+#intents.members = True
 bot = commands.Bot(command_prefix="!", status="online", activity=base_activity, intents=intents)
 
 @bot.event																		#called at bot startup
@@ -31,16 +31,21 @@ async def on_ready():
 	global notifyTime
 	global mangaTime
 	guild = bot.get_guild(GUILD)
-	chan = discord.utils.get(guild.text_channels, name="general")
-	await checkConnection(chan)
-	await checkAlarms(chan)
+	await bot.tree.sync()
 	if on_check is not True:
 		on_check = True
+		# Startup Msg/DB connection
+		chan = discord.utils.get(guild.text_channels, name="general")
+		await checkConnection(chan)
 		await bot.change_presence(activity=base_activity, status="online")
 		await chan.send("Hello! I'm getting ready to help you out!")
 
+		# Setup Notifications/ Alarms
 		chan = discord.utils.get(guild.text_channels, name="notifications")
+		await checkAlarms(chan)
 		n_timer = Timer(notifyTime, notify_timer, args={'chan':chan})
+
+		# Setup Manga Updates
 		chan = discord.utils.get(guild.text_channels, name="manga-updates")
 		m_timer = Timer(mangaTime, manga_timer, args={'chan':chan})
 
@@ -86,19 +91,19 @@ async def on_ready():
 		await msg.edit(view=view)
 		await view.update()
 
-@bot.command()
+@bot.hybrid_command()
 async def reminders(interaction):
 	global con
 	cursor = await getReminders(-1)
-	await interaction.send("Please wait one moment...")
+	msg = await interaction.send("Please wait one moment...")
 	if interaction.channel.name == "phone-menu":
-		view = reminderView(bot, await interaction.original_message(), interaction.user, cursor, MenuType.PHONE)
+		view = reminderView(bot, msg, interaction.user, cursor, MenuType.PHONE)
 	else:
-		view = reminderView(bot, await interaction.original_message(), interaction.user, cursor, MenuType.MAIN)
-	await interaction.edit_original_message(view=view)
+		view = reminderView(bot, msg, interaction.user, cursor, MenuType.MAIN)
+	await msg.edit_original_message(view=view)
 	await view.update()
 
-@bot.command()
+@bot.hybrid_command()
 async def templates(interaction):
 	global con
 	cursor = await getTemplates(-1)
@@ -110,7 +115,7 @@ async def templates(interaction):
 	await interaction.edit_original_message(view=view)
 	await view.update()
 
-@bot.command()
+@bot.hybrid_command()
 async def alarms(interaction):
 	global con
 	cursor = await getAlarms(-1)
@@ -121,5 +126,10 @@ async def alarms(interaction):
 		view = alarmView(bot, await interaction.original_message(), interaction.user, cursor, MenuType.MAIN)
 	await interaction.edit_original_message(view=view)
 	await view.update()
+
+@bot.check
+async def check_commands(ctx):
+	await bot.tree.sync()
+	return True
 
 bot.run(TOKEN)
