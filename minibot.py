@@ -92,39 +92,39 @@ async def on_ready():
 		await view.update()
 
 @bot.hybrid_command()
-async def reminders(interaction):
+async def reminders(ctx):
 	global con
 	cursor = await getReminders(-1)
-	msg = await interaction.send("Please wait one moment...")
-	if interaction.channel.name == "phone-menu":
-		view = reminderView(bot, msg, interaction.user, cursor, MenuType.PHONE)
+	msg = await ctx.send("Please wait one moment...")
+	if ctx.channel.name == "phone-menu":
+		view = reminderView(bot, msg, ctx.author, cursor, MenuType.PHONE)
 	else:
-		view = reminderView(bot, msg, interaction.user, cursor, MenuType.MAIN)
-	await msg.edit_original_message(view=view)
+		view = reminderView(bot, msg, ctx.author, cursor, MenuType.MAIN)
+	await msg.edit(view=view)
 	await view.update()
 
 @bot.hybrid_command()
-async def templates(interaction):
+async def templates(ctx):
 	global con
 	cursor = await getTemplates(-1)
-	await interaction.send("Please wait one moment...")
-	if interaction.channel.name == "phone-menu":
-		view = templateView(bot, await interaction.original_message(), interaction.user, cursor, MenuType.PHONE)
+	msg = await ctx.send("Please wait one moment...")
+	if ctx.channel.name == "phone-menu":
+		view = templateView(bot, msg, ctx.author, cursor, MenuType.PHONE)
 	else:
-		view = templateView(bot, await interaction.original_message(), interaction.user, cursor, MenuType.MAIN)
-	await interaction.edit_original_message(view=view)
+		view = templateView(bot, msg, ctx.author, cursor, MenuType.MAIN)
+	await msg.edit(view=view)
 	await view.update()
 
 @bot.hybrid_command()
-async def alarms(interaction):
+async def alarms(ctx):
 	global con
 	cursor = await getAlarms(-1)
-	await interaction.send("Please wait one moment...")
-	if interaction.channel.name == "phone-menu":
-		view = alarmView(bot, await interaction.original_message(), interaction.user, cursor, MenuType.PHONE)
+	msg = await ctx.send("Please wait one moment...")
+	if ctx.channel.name == "phone-menu":
+		view = alarmView(bot, msg, ctx.author, cursor, MenuType.PHONE)
 	else:
-		view = alarmView(bot, await interaction.original_message(), interaction.user, cursor, MenuType.MAIN)
-	await interaction.edit_original_message(view=view)
+		view = alarmView(bot, msg, ctx.author, cursor, MenuType.MAIN)
+	await msg.edit(view=view)
 	await view.update()
 
 @bot.check
