@@ -816,9 +816,9 @@ async def getNewestChapter(mangaID):
 async def getMangaInfo(mangaID):
 	try:
 		resp = requests.get("https://api.mangadex.org/manga/" + mangaID)
+		if resp.json().get("result") != "ok":
+			return {"errFlag": True}
 	except:
-		return {"errFlag": True}
-	if resp.json().get("result") != "ok":
 		return {"errFlag": True}
 	title = list(resp.json().get("data").get("attributes").get("title").values())[0]
 	respo = resp.json().get("data").get("relationships")
