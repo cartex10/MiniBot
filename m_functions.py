@@ -636,7 +636,7 @@ async def manga_timer(args):
 				await addManga(i, await getNewestChapter(i))
 			elif not result == "err":
 				newChap = await getNewestChapter(i)
-				if newChap != result and newChap != None:
+				if float(newChap) > float(result) and newChap != None:
 					# If manga in database has been updated
 					msgText = await constructMessage(TextEnum.Manga)
 					embed = discord.Embed().set_image(url=info.get("cover"))
@@ -836,17 +836,19 @@ async def getMangaInfo(mangaID):
 	title = list(resp.json().get("data").get("attributes").get("title").values())[0]
 	respo = resp.json().get("data").get("relationships")
 	cover = "https://uploads.mangadex.org/covers/" + mangaID
+	errFlag = True
 	for i in respo:
 		if i.get("type") == "cover_art":
 			try:
 				response = requests.get("https://api.mangadex.org/cover/" + i.get("id"))
 				if resp.json().get("result") != "ok":
-					return {"errFlag": True}
+					continue
 			except:
-				return {"errFlag": True}
+				continue
 			cover += "/" + response.json().get("data").get("attributes").get("fileName")
+			errFlag = False
 			break
-	return {"title": title, "cover": cover, "errFlag": False}
+	return {"title": title, "cover": cover, "errFlag": errFlag}
 
 # Templates
 async def addTemplate(msgText, msgType, msgWeight):
