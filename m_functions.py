@@ -599,26 +599,14 @@ async def notify_timer(args):
 			await chan.send(msgText)
 		elif len(reminders) > 0:
 			# Send low priority reminder
-			rem = random.choice(reminders)[0]
-			rem = rem[0].lower() + rem[1:]
-			if rem.endswith('?'):
-				msgText = await constructMessage(TextEnum.Questioning)
-			else:
-				msgText = await constructMessage(TextEnum.Notification)
-			await chan.send(msgText.replace("***", rem), delete_after=360*5)
+			await chan.send(await constructRandomReminder(), delete_after=360*5)
 		timeNoLuck = 0
 	else:
 		# Do nothing
 		timeNoLuck += notifyTime
 	if timeNoLuck >= maxTimers * notifyTime:
 		# Send high priority reminder
-		reminders = await getReminders(True)
-		rem = random.choice(reminders)[0]
-		if rem.endswith('?'):
-			msgText = await constructMessage(TextEnum.Questioning)
-		else:
-			msgText = await constructMessage(TextEnum.Notification)
-		await chan.send(msgText.replace("***", rem), delete_after=360*5)
+		await chan.send(await constructRandomReminder(), delete_after=360*5)
 		timeNoLuck = 0
 	n_timer = Timer(notifyTime, notify_timer, args={'chan':chan})
 
@@ -705,12 +693,37 @@ async def alarm_timer(args):
 			alarmTimers = alarmTimers[:-1]
 
 async def constructMessage(msgType):
-	greet = await getRandomTemplate(TextEnum.Greeting.value)
 	msgText = await getRandomTemplate(msgType.value)
-	if greet == "":
-		return msgText[0].upper() + msgText[1:].lower()
+	if msgText.upper() == msgText:
+		return msgText
 	else:
-		return greet[0].upper() + greet[1:].lower() + " " + msgText[0].lower() + msgText[1:]
+		greet = await getRandomTemplate(TextEnum.Greeting.value)
+	if len(msgText) > 1:
+		if msgText[1] == " ":
+			msgText[0] = msgText[0].upper()
+		elif greet == "":
+			msgText = msgText[0].upper() + msgText[1:]
+		else:
+			msgText = msgText[0].lower() + msgText[1:]
+	if greet == "":
+		return msgText
+	else:
+		return greet[0].upper() + greet[1:].lower() + " " + msgText
+
+async def constructRandomReminder():
+	reminders = await getReminders(True)
+	rem = random.choice(reminders)[0]
+	if rem.endswith('?'):
+		msgText = await constructMessage(TextEnum.Questioning)
+	else:
+		msgText = await constructMessage(TextEnum.Notification)
+	if msgText.startswith("***") and len(rem) > 1:
+		msgText = msgText.replace("***", rem[0].upper() + rem[1:])
+	elif len(rem) > 1:
+		msgText = msgText.replace("***", rem[0].lower() + rem[1:])
+	else:
+		msgText = msgText.replace("***", rem)
+	return msgText
 
 ### Database Functions
 async def checkConnection(chan):
