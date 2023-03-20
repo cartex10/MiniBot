@@ -80,7 +80,7 @@ class alarmModal(discord.ui.Modal, title="Enter Alarm Info"):
 			await interaction.response.edit_message(view=self.view)
 			return
 		alarmID = await getNextID()
-		if self.number == None:
+		if self.number is None:
 			await addAlarm(alarmID, self.name.value, alarmDateTime)
 			await setAlarm(self.chan, alarmID, self.name.value, alarmDateTime)
 		else:
@@ -484,7 +484,7 @@ class alarmView(discord.ui.View):
 			elif self.menutype == MenuType.PHONE:
 				msgtext += line + "\n"
 				line = "\t"
-			if alarm.get('waitTime') == None:
+			if alarm.get('waitTime') is None:
 				#Full
 				line += alarmDate.strftime("%a %m/%d/%y @ %I:%M %p")
 			elif alarm.get('waitUnit').name == "D":
@@ -776,8 +776,11 @@ async def updateSetting(setting, value):
 async def getSetting(setting):
 	global con
 	cursor = con.execute("SELECT value FROM SETTINGS WHERE setting=?", (setting,))
-	return cursor.fetchall()[0][0]
-
+	try:
+		return cursor.fetchall()[0][0]
+	except:
+		return None
+		
 def splitSetting(text):
 	if text.find("/") == -1:
 		return {"setting": text, "folder": None}
@@ -819,7 +822,7 @@ async def checkMute():
 	dawn = await getSetting("dawn")
 	dusk = await getSetting("dusk")
 	sleepAtNight = await getSetting("sleepAtNight")
-	if dawn == None or dusk == None or sleepAtNight == None or not sleepAtNight:
+	if dawn is None or dusk is None or sleepAtNight is None or not sleepAtNight:
 		return False
 	now = datetime.datetime.now()
 	today = datetime.datetime.today()
@@ -868,7 +871,6 @@ def strToTime(string):
 	hour, minute = string.split(":")
 	return datetime.time(hour=int(hour), minute=int(minute))
 
-
 # Manga
 async def addManga(mangaID, chapterNUM):
 	global con
@@ -886,7 +888,7 @@ async def findManga(mangaID):
 	cursor = con.execute("SELECT chapterNUM FROM MANGA WHERE mangaID=?", (mangaID,))
 	for manga in cursor.fetchall():
 		out = manga[0]
-	if out == None:
+	if out is None:
 		return "err"
 	return out
 
@@ -1001,7 +1003,7 @@ async def checkAlarms(chan):
 				lateText = "A few alarms went off while I was gone! Here they are...\n\t" + lateText[37:] + "\n\t" + alarm.get("name")
 			else:
 				lateText += "\n\t" + alarm.get("name")
-			if alarmFreq == None:
+			if alarmFreq is None:
 				# Remove unique alarms
 				await deleteAlarm(alarmID)
 				continue
@@ -1073,14 +1075,14 @@ async def getAlarms(waitUnit):
 	global con
 	if waitUnit < 0:
 		cursor = con.execute("SELECT id, name, nextDate, waitTime, waitUnit FROM ALARMS")
-	elif waitUnit == None:
+	elif waitUnit is None:
 		cursor = con.execute("SELECT id, name, nextDate, waitTime, waitUnit FROM ALARMS WHERE waitUnit=?", (None,))
 	else:
 		cursor = con.execute("SELECT id, name, nextDate, waitTime, waitUnit FROM ALARMS WHERE waitUnit=?", (waitUnit,))
 	cursor = cursor.fetchall()
 	returnList = []
 	for i in cursor:
-		if i[3] == None:
+		if i[3] is None:
 			temp = {"id":int(i[0]), "name":i[1], "nextDate":datetime.datetime.fromisoformat(i[2]), "waitTime":None, "waitUnit":None}
 		else:
 			temp = {"id":int(i[0]), "name":i[1], "nextDate":datetime.datetime.fromisoformat(i[2]), "waitTime":int(i[3]), "waitUnit":FreqUnit(int(i[4]))}

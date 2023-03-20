@@ -41,9 +41,12 @@ async def on_ready():
 		channels = ["menu", "phone-menu", "notifications"]
 		category = discord.utils.get(guild.categories, name="Bot Channels")
 		for chan in channels:
-			toDel = discord.utils.get(guild.text_channels, name=chan)
-			await toDel.delete()
-			await guild.create_text_channel(name=chan, category=category, position=0)
+			try:
+				toDel = discord.utils.get(guild.text_channels, name=chan)
+				await toDel.delete()
+				await guild.create_text_channel(name=chan, category=category, position=0)
+			except:
+				await guild.create_text_channel(name=chan, category=category, position=0)
 
 		# Setup Notifications/ Alarms
 		chan = discord.utils.get(guild.text_channels, name="notifications")
@@ -138,22 +141,31 @@ async def clean(ctx):
 	channels = ["menu", "phone-menu", "notifications"]
 	category = discord.utils.get(guild.categories, name="Bot Channels")
 	for chan in channels:
-		toDel = discord.utils.get(guild.text_channels, name=chan)
-		await toDel.delete()
-		await guild.create_text_channel(name=chan, category=category, position=0)
+		try:
+			toDel = discord.utils.get(guild.text_channels, name=chan)
+			await toDel.delete()
+			await guild.create_text_channel(name=chan, category=category, position=0)
+		except:
+			await guild.create_text_channel(name=chan, category=category, position=0)
 	chan = discord.utils.get(guild.text_channels, name="notifications")
 	await chan.send("Just finished cleaning up!")
 
 @bot.hybrid_command()
 async def settings(ctx, setting, value):
-	if value.upper() == "L" or value.upper() == "LIST":
+	#await ctx.defer(ephemeral=True)
+	msg = await ctx.send("Please wait one moment")
+	if setting.upper() == "L" or setting.upper() == "LIST":
+		# List command
 		text = "List of all configurable settings:\n```"
 		for setting in list(Settings):
 			value = await getSetting(setting)
-			if value == None:
+			if value is None:
 				value = "[ ]"
 			text += setting + "  ->  " + value + "\n"
-		await ctx.send(text + "```")
+		await msg.edit(content=text + "```")
+		return
+	if await getSetting(setting) is None:
+		await msg.edit(content="ERROR: Setting not found.")
 		return
 	if value[0].upper() == "T" or value[0].upper() == "Y":
 		# Check for boolean true inputs
@@ -169,10 +181,10 @@ async def settings(ctx, setting, value):
 	setting = splitSetting(setting)
 	await updateSetting(setting.get("setting"), value)
 	text = "Setting updated successfully!\n```"
-	if value == None:
+	if value is None:
 		value = "[ ]"
-	text += setting.get("setting") + " -> " + value + "```"
-	await ctx.send(content=text)
+	text += setting.get("setting") + " -> " + str(value) + "```"
+	await msg.edit(content=text)
 
 @bot.check
 async def check_commands(ctx):
