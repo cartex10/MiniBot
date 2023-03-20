@@ -57,6 +57,7 @@ class alarmModal(discord.ui.Modal, title="Enter Alarm Info"):
 		self.chan = chan
 
 	async def on_submit(self, interaction: discord.Interaction):
+		await interaction.response.defer()
 		try:
 			splitDate = self.alarmDate.value.split("/")
 			if int(splitDate[2]) < 2000:
@@ -774,7 +775,9 @@ async def updateSetting(setting, value):
 async def getSetting(setting):
 	global con
 	cursor = con.execute("SELECT value FROM SETTINGS WHERE setting=?", (setting,))
+	print(setting)
 	try:
+		print("fetch:" + cursor.fetchall()[0][0])
 		return cursor.fetchall()[0][0]
 	except:
 		return None
