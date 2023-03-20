@@ -149,7 +149,10 @@ async def settings(ctx, setting, value):
 	if setting == "help" or setting == "help":
 		text = "List of all configurable settings:\n```"
 		for setting in list(Settings):
-			text += setting + "  ->  " + await getSetting(setting) + "\n"
+			value = await getSetting(setting)
+			if value == None:
+				value = "[ ]"
+			text += setting + "  ->  " + value + "\n"
 		await ctx.send(text + "```")
 		return
 	if (value[0].upper() == "T") or (value[0].upper() == "Y"):
