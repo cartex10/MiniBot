@@ -72,7 +72,7 @@ class alarmModal(discord.ui.Modal, title="Enter Alarm Info"):
 		try:
 			if self.alarmTime.value != "":
 				splitTime = self.alarmTime.value.split(":")
-				convTime = datetime.time(int(splitTime[0]), int(splitTime[1]), tzinfo=EDT)
+				convTime = datetime.time(int(splitTime[0]), int(splitTime[1]))
 			else:
 				convTime = NOON
 			alarmDateTime = datetime.datetime.combine(convDate, convTime)
@@ -1010,7 +1010,7 @@ async def checkAlarms(chan):
 				continue
 			else:
 				# Repeat necessary alarms
-				nextTime = datetime.time(alarmDate.hour, alarmDate.minute, tzinfo=EDT)
+				nextTime = datetime.time(alarmDate.hour, alarmDate.minute)
 				if alarmUnit == FreqUnit(1):
 					delta = datetime.timedelta(days=alarmFreq)
 					while (now - alarmDate).total_seconds() > 0:
