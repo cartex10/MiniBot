@@ -3,9 +3,6 @@
 # TODO: ! - priority; * - working on
 #		randomly changing status/presence
 #	!	make high priorities ping user
-#		mute command
-#	!	stop sending messages overnight, say goodnight and good morning
-#		fix constructMessage to not lower if msgText[1] = " "
 #
 import discord
 from discord.ext import commands
