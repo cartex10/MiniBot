@@ -594,7 +594,8 @@ async def notify_timer(args):
 	global personalityOverride
 	global n_timer
 	chan = args["chan"]
-	if random.random() <= lowerFreq:
+	mute = await checkMute()
+	if random.random() <= lowerFreq and not mute:
 		reminders = await getReminders(False)
 		if random.random() <= personalityOverride:
 			# Instead of notifying, send personal message
@@ -604,7 +605,7 @@ async def notify_timer(args):
 			# Send low priority reminder
 			await chan.send(await constructRandomReminder(), delete_after=360*5)
 		timeNoLuck = 0
-	else:
+	elif not mute:
 		# Do nothing
 		timeNoLuck += notifyTime
 	if timeNoLuck >= maxTimers * notifyTime:
@@ -758,7 +759,6 @@ async def checkConnection(chan):
 	except:
 		await msg.edit(content="```Creating SETTINGS table```")
 		cursor = con.execute("CREATE TABLE SETTINGS (setting TEXT PRIMARY KEY NOT NULL, folder TEXT, value TEXT)")
-	
 	for setting in list(Settings):
 		toAdd = splitSetting(setting)
 		cursor = con.execute("SELECT value FROM SETTINGS WHERE setting=?", (toAdd.get("setting"),))
@@ -772,6 +772,11 @@ async def updateSetting(setting, value):
 	global con
 	cursor = con.execute("UPDATE SETTINGS SET value=? WHERE setting=?", (value, setting))
 	con.commit()
+
+async def getSetting(setting):
+	global con
+	cursor = con.execute("SELECT value FROM SETTINGS WHERE setting=?", (setting,))
+	return cursor.fetchall()[0][0]
 
 def splitSetting(text):
 	if text.find("/") == -1:
@@ -809,6 +814,60 @@ async def deleteReminder(title, priority):
 	global con
 	con.execute("DELETE FROM REMINDERS WHERE title=? AND priority=?", (title, priority))
 	con.commit()
+
+async def checkMute():
+	dawn = await getSetting("dawn")
+	dusk = await getSetting("dusk")
+	sleepAtNight = await getSetting("sleepAtNight")
+	if dawn == None or dusk == None or sleepAtNight == None or not sleepAtNight:
+		return False
+	now = datetime.datetime.now()
+	today = datetime.datetime.today()
+	dawn = datetime.datetime.combine(today, strToTime(dawn))
+	dusk = datetime.datetime.combine(today, strToTime(dusk))
+	if (dawn - dusk).total_seconds() > 0:
+		# If dusk is after midnight
+		if dawn.hour > now.hour and dusk.hour < now.hour:
+			return True
+		elif dawn.hour == now.hour and dusk.hour == dawn.hour:
+			if dawn.minute > now.minute and dusk.minute <= now.minute:
+				return True
+			else:
+				return False
+		elif dawn.hour == now.hour:
+			if dawn.minute > now.minute:
+				return True
+			else:
+				return False
+		elif dusk.hour == now.hour:
+			if dusk.minute <= now.minute:
+				return True
+			else:
+				return False
+		else:
+			return False
+	elif (dawn - dusk).total_seconds() < 0:
+		# If dusk is before midnight
+		if dawn.hour > now.hour and dusk.hour > now.hour:
+			return True
+		elif dawn.hour == now.hour:
+			if dawn.minute > now.minute:
+				return True
+			else:
+				return False
+		elif dusk.hour == now.hour:
+			if dusk.minute <= now.minute:
+				return True
+			else:
+				return False
+		else:
+			return False
+
+def strToTime(string):
+	#assumes string in ##:## format
+	hour, minute = string.split(":")
+	return datetime.time(hour=int(hour), minute=int(minute))
+
 
 # Manga
 async def addManga(mangaID, chapterNUM):

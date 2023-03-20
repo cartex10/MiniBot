@@ -87,10 +87,9 @@ for i in list(FreqUnit):
 	else:
 		UnitOptions.append(discord.SelectOption(label=i.name, value=i.value))
 
-
-
 Settings = {
 	# name: description
 	"dusk": "(##:##) Time to pause MiniBot reminders every night",
-	"dawn": "(##:##) Time to resume MiniBot reminders every morning"
+	"dawn": "(##:##) Time to resume MiniBot reminders every morning",
+	"sleepAtNight": "(BOOL) Toggle reminders between dusk and dawn"
 }
