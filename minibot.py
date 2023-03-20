@@ -147,6 +147,27 @@ async def clean(ctx):
 	chan = discord.utils.get(guild.text_channels, name="notifications")
 	await chan.send("Just finished cleaning up!")
 
+@bot.hybrid_command()
+async def settings(ctx, setting, value):
+	if (value[0].upper() == "T") or (value[0].upper() == "Y"):
+		# Check for boolean true inputs
+		if (len(value) == 1) or (value.upper() == "TRUE") or (value.upper() == "YES"):
+			value = 1
+	elif (value[0].upper() == "F") or (value[0].upper() == "N"):
+		# Check for boolean false inputs
+		if (len(value) == 1) or (value.upper() == "FALSE") or (value.upper() == "NO"):
+			value = 0
+		# Check for None/Null inputs
+		elif (value.upper() == "NONE") or (value.upper() == "NULL"):
+			value = None
+	setting = splitSetting(setting)
+	await updateSetting(setting.get("setting"), value)
+	text = "Setting updated successfully!\n```"
+	if value == None:
+		value = "[ ]"
+	text += setting.get("setting") + " -> " + value + "```"
+	await ctx.send(content=text)
+
 @bot.check
 async def check_commands(ctx):
 	await bot.tree.sync()

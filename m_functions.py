@@ -753,7 +753,35 @@ async def checkConnection(chan):
 	except:
 		await msg.edit(content="```Creating ALARMS table```")
 		cursor = con.execute("CREATE TABLE ALARMS (id INT PRIMARY KEY NOT NULL, name TEXT NOT NULL, nextDate DATETIME NOT NULL, waitTime INT, waitUnit INT, adjust BOOL DEFAULT False);")
+	try:
+		cursor = con.execute("SELECT setting, folder, value FROM SETTINGS")
+	except:
+		await msg.edit(content="```Creating SETTINGS table```")
+		cursor = con.execute("CREATE TABLE SETTINGS (setting TEXT PRIMARY KEY NOT NULL, folder TEXT, value TEXT)")
+	
+	for setting in list(Settings):
+		toAdd = splitSetting(setting)
+		cursor = con.execute("SELECT value FROM SETTINGS WHERE setting=?", (toAdd.get("setting"),))
+		if len(cursor.fetchall()) == 0:
+			await msg.edit(content="```Updating SETTINGS table```")
+			cursor = con.execute("INSERT INTO SETTINGS VALUES (?, ?, NULL)", (toAdd.get("setting"), toAdd.get("folder")))
+			con.commit()
 	await msg.edit(content="```Connection successful!```")
+
+async def updateSetting(setting, value):
+	global con
+	cursor = con.execute("UPDATE SETTINGS SET value=? WHERE setting=?", (value, setting))
+	con.commit()
+
+def splitSetting(text):
+	if text.find("/") == -1:
+		return {"setting": text, "folder": None}
+	else:
+		text = text.rsplit('/')
+		return {"setting": text[1], "folder": text[0]}
+
+def joinSetting(setting, folder):
+	return folder + "/" "setting"
 
 # Reminders
 async def getReminders(priority):
