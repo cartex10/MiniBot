@@ -57,7 +57,6 @@ class alarmModal(discord.ui.Modal, title="Enter Alarm Info"):
 		self.chan = chan
 
 	async def on_submit(self, interaction: discord.Interaction):
-		await interaction.response.defer()
 		try:
 			splitDate = self.alarmDate.value.split("/")
 			if int(splitDate[2]) < 2000:
