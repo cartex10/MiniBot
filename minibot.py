@@ -152,7 +152,7 @@ async def clean(ctx):
 
 @bot.hybrid_command()
 async def settings(ctx, setting, value):
-	#await ctx.defer(ephemeral=True)
+	await ctx.defer(ephemeral=True)
 	msg = await ctx.send("Please wait one moment")
 	if setting.upper() == "L" or setting.upper() == "LIST":
 		# List command
