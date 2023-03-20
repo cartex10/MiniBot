@@ -146,7 +146,7 @@ async def clean(ctx):
 
 @bot.hybrid_command()
 async def settings(ctx, setting, value):
-	if setting == "help" or setting == "help":
+	if value.upper() == "L" or value.upper() == "LIST":
 		text = "List of all configurable settings:\n```"
 		for setting in list(Settings):
 			value = await getSetting(setting)
@@ -155,16 +155,16 @@ async def settings(ctx, setting, value):
 			text += setting + "  ->  " + value + "\n"
 		await ctx.send(text + "```")
 		return
-	if (value[0].upper() == "T") or (value[0].upper() == "Y"):
+	if value[0].upper() == "T" or value[0].upper() == "Y":
 		# Check for boolean true inputs
 		if (len(value) == 1) or (value.upper() == "TRUE") or (value.upper() == "YES"):
 			value = 1
-	elif (value[0].upper() == "F") or (value[0].upper() == "N"):
+	elif value[0].upper() == "F" or value[0].upper() == "N":
 		# Check for boolean false inputs
 		if (len(value) == 1) or (value.upper() == "FALSE") or (value.upper() == "NO"):
 			value = 0
 		# Check for None/Null inputs
-		elif (value.upper() == "NONE") or (value.upper() == "NULL"):
+		elif value.upper() == "NONE" or value.upper() == "NULL":
 			value = None
 	setting = splitSetting(setting)
 	await updateSetting(setting.get("setting"), value)
