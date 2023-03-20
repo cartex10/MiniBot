@@ -149,6 +149,12 @@ async def clean(ctx):
 
 @bot.hybrid_command()
 async def settings(ctx, setting, value):
+	if setting == "help" or setting == "help":
+		text = "List of all configurable settings:\n```"
+		for setting in list(Settings):
+			text += setting + "  ->  " + await getSetting(setting) + "\n"
+		await ctx.send(text + "```")
+		return
 	if (value[0].upper() == "T") or (value[0].upper() == "Y"):
 		# Check for boolean true inputs
 		if (len(value) == 1) or (value.upper() == "TRUE") or (value.upper() == "YES"):
