@@ -42,7 +42,8 @@ class FreqUnit(Enum):
 	M = 3
 	Y = 4
 
-EDT = datetime.timezone(timedelta(hours=-5), "EST") #EST=-5 / EDT=-4
+EST = datetime.timezone(timedelta(hours=-5), "EST") #EST=-5 / EDT=-4
+EDT = datetime.timezone(timedelta(hours=-4), "EDT")
 NOON = datetime.time(12, 0, 0, 0, EDT)
 
 ReminderPriorities = []

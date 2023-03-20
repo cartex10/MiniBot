@@ -661,7 +661,7 @@ async def alarm_timer(args):
 	await chan.send(mentionText + name)
 	# Check if needs to be repeated
 	if waitTime != None:
-		now = datetime.datetime.now(tz=EDT)
+		now = datetime.datetime.now()
 		if waitUnit == FreqUnit(1):
 			newDate = now + datetime.timedelta(days=waitTime)
 		elif waitUnit == FreqUnit(2):
@@ -780,7 +780,7 @@ async def getSetting(setting):
 		return cursor.fetchall()[0][0]
 	except:
 		return None
-		
+
 def splitSetting(text):
 	if text.find("/") == -1:
 		return {"setting": text, "folder": None}
@@ -986,7 +986,7 @@ async def checkAlarms(chan):
 	global alarmTimers
 	alarms = await getAlarms(-1)
 	count = 0
-	now = datetime.datetime.now(tz=EDT)
+	now = datetime.datetime.now()
 	lateText = ""
 	for alarm in alarms:
 		# Iterate through every alarm in db
@@ -1091,7 +1091,7 @@ async def getAlarms(waitUnit):
 
 async def setAlarm(chan, alarmID, name, nextDate, waitTime=None, waitUnit=None, adjust=False):
 	global alarmTimers
-	delta = nextDate - datetime.datetime.now(tz=EDT)
+	delta = nextDate - datetime.datetime.now()
 	if waitTime != None:
 		args = {'chan':chan, 'alarmID':alarmID, 'name':name, 'waitTime':int(waitTime), 'waitUnit':waitUnit, 'adjust':adjust}
 	else:
