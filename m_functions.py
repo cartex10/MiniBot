@@ -487,6 +487,9 @@ class alarmView(discord.ui.View):
 			if alarm.get('waitTime') == None:
 				#Full
 				line += alarmDate.strftime("%a %m/%d/%y @ %I:%M %p")
+			elif alarm.get('waitUnit').name == "D":
+				# Daily + Time
+				line += alarmDate.strftime("Daily @ %I:%M %p")
 			elif alarm.get('waitUnit').name == "W":
 				# Weekday + Time
 				line += alarmDate.strftime("%As @ %I:%M %p")
