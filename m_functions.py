@@ -703,9 +703,7 @@ async def constructMessage(msgType):
 	else:
 		greet = await getRandomTemplate(TextEnum.Greeting.value)
 	if len(msgText) > 1:
-		if msgText[1] == " ":
-			msgText[0] = msgText[0].upper()
-		elif greet == "":
+		if msgText[1] == " " or greet == "":
 			msgText = msgText[0].upper() + msgText[1:]
 		else:
 			msgText = msgText[0].lower() + msgText[1:]
