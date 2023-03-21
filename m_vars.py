@@ -99,5 +99,5 @@ SettingFolders = {
 	# name: folder
 	"dusk": None,
 	"dawn": None,
-	"sleepAtNight": "test"
+	"sleepAtNight": None
 }
