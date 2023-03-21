@@ -164,7 +164,7 @@ async def settings(ctx, setting, value):
 			text += setting + "  ->  " + value + "\n"
 		await msg.edit(content=text + "```")
 		return
-	if await getSetting(setting) is None:
+	if await getSetting(setting) == -1:
 		await msg.edit(content="ERROR: Setting not found.")
 		return
 	if value[0].upper() == "T" or value[0].upper() == "Y":
@@ -178,7 +178,7 @@ async def settings(ctx, setting, value):
 		# Check for None/Null inputs
 		elif value.upper() == "NONE" or value.upper() == "NULL":
 			value = None
-	setting = splitSetting(setting)
+	setting = await splitSetting(setting)
 	await updateSetting(setting.get("setting"), value)
 	text = "Setting updated successfully!\n```"
 	if value is None:

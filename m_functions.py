@@ -758,7 +758,7 @@ async def checkConnection(chan):
 		await msg.edit(content="```Creating SETTINGS table```")
 		cursor = con.execute("CREATE TABLE SETTINGS (setting TEXT PRIMARY KEY NOT NULL, folder TEXT, value TEXT)")
 	for setting in list(Settings):
-		toAdd = splitSetting(setting)
+		toAdd = await splitSetting(setting)
 		cursor = con.execute("SELECT value FROM SETTINGS WHERE setting=?", (toAdd.get("setting"),))
 		if len(cursor.fetchall()) == 0:
 			await msg.edit(content="```Updating SETTINGS table```")
@@ -776,19 +776,20 @@ async def getSetting(setting):
 	cursor = con.execute("SELECT value FROM SETTINGS WHERE setting=?", (setting,))
 	print(setting)
 	try:
-		print("fetch:" + cursor.fetchall()[0][0])
-		return cursor.fetchall()[0][0]
+		fetch = cursor.fetchall()[0][0]
+		print("fetch:" + fetch)
+		return fetch
 	except:
-		return None
+		return -1
 
-def splitSetting(text):
+async def splitSetting(text):
 	if text.find("/") == -1:
 		return {"setting": text, "folder": None}
 	else:
 		text = text.rsplit('/')
 		return {"setting": text[1], "folder": text[0]}
 
-def joinSetting(setting, folder):
+async def joinSetting(setting, folder):
 	return folder + "/" "setting"
 
 # Reminders
