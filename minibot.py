@@ -153,7 +153,7 @@ async def clean(ctx):
 @bot.hybrid_command()
 async def settings(ctx, setting, value):
 	await ctx.defer(ephemeral=True)
-	msg = await ctx.send("Please wait one moment")
+	msg = await ctx.send("Please wait one moment...")
 	if setting.upper() == "L" or setting.upper() == "LIST":
 		# List command
 		text = "List of all configurable settings:\n```"
@@ -162,7 +162,7 @@ async def settings(ctx, setting, value):
 			text += setting + "  ->  " + str(value) + "\n"
 		await msg.edit(content=text + "```")
 		return
-	if await getSetting(setting) == "[ ]":
+	if await getSetting(setting) is None:
 		await msg.edit(content="ERROR: Setting not found.")
 		return
 	if value[0].upper() == "T" or value[0].upper() == "Y":
@@ -180,7 +180,7 @@ async def settings(ctx, setting, value):
 	text = "Setting updated successfully!\n```"
 	if value is None:
 		value = "[ ]"
-	text += setting.get("setting") + " -> " + str(value) + "```"
+	text += setting + " -> " + str(value) + "```"
 	await msg.edit(content=text)
 
 @bot.check

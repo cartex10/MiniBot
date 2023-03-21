@@ -758,11 +758,10 @@ async def checkConnection(chan):
 		await msg.edit(content="```Creating SETTINGS table```")
 		cursor = con.execute("CREATE TABLE SETTINGS (setting TEXT PRIMARY KEY NOT NULL, folder TEXT, value TEXT)")
 	for setting in list(Settings):
-		toAdd = await splitSetting(setting)
-		cursor = con.execute("SELECT value FROM SETTINGS WHERE setting=?", (toAdd.get("setting"),))
+		cursor = con.execute("SELECT value FROM SETTINGS WHERE setting=?", (setting,))
 		if len(cursor.fetchall()) == 0:
 			await msg.edit(content="```Updating SETTINGS table```")
-			cursor = con.execute("INSERT INTO SETTINGS VALUES (?, ?, NULL)", (toAdd.get("setting"), toAdd.get("folder")))
+			cursor = con.execute("INSERT INTO SETTINGS VALUES (?, ?, NULL)", (setting, SettingFolders.get(setting)))
 			con.commit()
 	await msg.edit(content="```Connection successful!```")
 
@@ -773,11 +772,13 @@ async def updateSetting(setting, value):
 
 async def getSetting(setting):
 	global con
-	cursor = con.execute("SELECT value FROM SETTINGS WHERE setting=?", (setting,))
-	fetch = cursor.fetchall()[0][0]
-	if fetch is None:
+	cursor = con.execute("SELECT setting, value FROM SETTINGS WHERE setting=?", (setting,))
+	fetch = cursor.fetchall()[0]
+	if fetch[0] == None:
+		return None
+	if fetch[1] is None:
 		return "[ ]"
-	return str(fetch)
+	return str(fetch[1])
 
 # Reminders
 async def getReminders(priority):

@@ -94,3 +94,10 @@ Settings = {
 	"dawn": "(##:##) Time to resume MiniBot reminders every morning",
 	"sleepAtNight": "(BOOL) Toggle reminders between dusk and dawn"
 }
+
+SettingFolders = {
+	# name: folder
+	"dusk": None,
+	"dawn": None,
+	"sleepAtNight": "test"
+}
