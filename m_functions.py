@@ -774,23 +774,10 @@ async def updateSetting(setting, value):
 async def getSetting(setting):
 	global con
 	cursor = con.execute("SELECT value FROM SETTINGS WHERE setting=?", (setting,))
-	print(setting)
-	try:
-		fetch = cursor.fetchall()[0][0]
-		print("fetch:" + fetch)
-		return fetch
-	except:
-		return -1
-
-async def splitSetting(text):
-	if text.find("/") == -1:
-		return {"setting": text, "folder": None}
-	else:
-		text = text.rsplit('/')
-		return {"setting": text[1], "folder": text[0]}
-
-async def joinSetting(setting, folder):
-	return folder + "/" "setting"
+	fetch = cursor.fetchall()[0][0]
+	if fetch is None:
+		return "[ ]"
+	return str(fetch)
 
 # Reminders
 async def getReminders(priority):

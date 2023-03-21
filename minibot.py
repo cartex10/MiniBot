@@ -159,12 +159,10 @@ async def settings(ctx, setting, value):
 		text = "List of all configurable settings:\n```"
 		for setting in list(Settings):
 			value = await getSetting(setting)
-			if value is None:
-				value = "[ ]"
-			text += setting + "  ->  " + value + "\n"
+			text += setting + "  ->  " + str(value) + "\n"
 		await msg.edit(content=text + "```")
 		return
-	if await getSetting(setting) == -1:
+	if await getSetting(setting) == "[ ]":
 		await msg.edit(content="ERROR: Setting not found.")
 		return
 	if value[0].upper() == "T" or value[0].upper() == "Y":
@@ -176,10 +174,9 @@ async def settings(ctx, setting, value):
 		if (len(value) == 1) or (value.upper() == "FALSE") or (value.upper() == "NO"):
 			value = 0
 		# Check for None/Null inputs
-		elif value.upper() == "NONE" or value.upper() == "NULL":
+		elif value.upper() == "NONE" or value.upper() == "NULL" or value == "[ ]":
 			value = None
-	setting = await splitSetting(setting)
-	await updateSetting(setting.get("setting"), value)
+	await updateSetting(setting, value)
 	text = "Setting updated successfully!\n```"
 	if value is None:
 		value = "[ ]"
