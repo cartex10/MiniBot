@@ -69,9 +69,8 @@ class alarmModal(discord.ui.Modal, title="Enter Alarm Info"):
 			await interaction.response.edit_message(view=self.view)
 			return
 		try:
-			if self.alarmTime.value != "" or self.alarmTime.value is None:
-				splitTime = self.alarmTime.value.split(":")
-				convTime = datetime.time(hour=int(splitTime[0]), minute=int(splitTime[1]))
+			if self.alarmTime.value != "":
+				convTime = strToTime(self.alarmTime.value)
 			else:
 				convTime = NOON
 			alarmDateTime = datetime.datetime.combine(convDate, convTime)
