@@ -17,8 +17,8 @@ global con
 global alarmTimers
 alarmTimers = []
 
-lowerFreq = 0.125
-personalityOverride = 0.20
+lowerFreq = 0.20
+personalityOverride = 0.125
 maxTimers = 15
 notifyTime = 603
 mangaTime = 300
