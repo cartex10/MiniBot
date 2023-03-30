@@ -624,12 +624,12 @@ async def manga_timer(args):
 	chan = args["chan"]
 	mangaIDs = []
 	# Get list of manga from mangadex custom list
-	#try:
-	response = requests.get("https://api.mangadex.org/list/" + MANGALIST)
-	temp = response.json().get("data").get("relationships")
-	#except:
-	#	m_timer = Timer(mangaTime, manga_timer, args={'chan':chan})
-	#	return
+	try:
+		response = requests.get("https://api.mangadex.org/list/" + MANGALIST)
+		temp = response.json().get("data").get("relationships")
+	except:
+		m_timer = Timer(mangaTime, manga_timer, args={'chan':chan})
+		return
 	for i in temp:
 		if response.json().get("result") == "ok":
 			mangaIDs.append(i.get("id"))
@@ -642,7 +642,8 @@ async def manga_timer(args):
 				# If manga is not in database
 				await addManga(i, await getNewestChapter(i))
 			elif not result == "err":
-				newChap = await getNewestChapter(i)
+				info.update(await getNewestChapter(i))
+				newChap = info.get("newChap")
 				if float(newChap) > float(result) and newChap != None:
 					# If manga in database has been updated
 					msgText = await constructMessage(TextEnum.Manga)
@@ -899,7 +900,8 @@ async def getManga():
 
 async def getNewestChapter(mangaID):
 	try:
-		response = requests.get("https://api.mangadex.org/manga/" + mangaID + "/aggregate")
+		request = "https://api.mangadex.org/manga/" + mangaID + "/aggregate"
+		response = requests.get(request)
 		respo = response.json().get("volumes")
 		vols = list(respo)
 	except:
@@ -908,7 +910,7 @@ async def getNewestChapter(mangaID):
 		chaps = list(respo.get("none").get("chapters").keys())
 	except:
 		chaps = list(respo.get(vols[1]).get("chapters").keys())
-	return chaps[0]
+	return {"newChap": chaps[0]}
 
 async def getMangaInfo(mangaID):
 	try:
