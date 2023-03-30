@@ -638,20 +638,22 @@ async def manga_timer(args):
 		info = await getMangaInfo(i)
 		if not info.get("errFlag"):
 			result = await findManga(i)
+			info.update(await getNewestChapter(i))
 			if result == -1:
 				# If manga is not in database
-				await addManga(i, (await getNewestChapter(i)).get("newChap"))
+				if not info.get("errFlag"):
+					await addManga(i, info.get("newChap"))
 			elif not result == "err":
-				info.update(await getNewestChapter(i))
-				newChap = info.get("newChap")
-				if float(newChap) > float(result) and newChap != None:
-					# If manga in database has been updated
-					msgText = await constructMessage(TextEnum.Manga)
-					title = info.get("title") + " Chapter " + info.get("newChap")
-					embed = discord.Embed(title=title, description=info.get("link"))
-					embed.set_image(url=info.get("cover"))
-					await chan.send(msgText.replace("***", info.get("title")).replace("###", newChap), embed=embed)
-					await editManga(i, newChap)
+				if not info.get("errFlag"):
+					newChap = info.get("newChap")
+					if float(newChap) > float(result) and newChap != None:
+						# If manga in database has been updated
+						msgText = await constructMessage(TextEnum.Manga)
+						title = info.get("title") + " Chapter " + info.get("newChap")
+						embed = discord.Embed(title=title, description=info.get("link"))
+						embed.set_image(url=info.get("cover"))
+						await chan.send(msgText.replace("***", info.get("title")).replace("###", newChap), embed=embed)
+						await editManga(i, newChap)
 	m_timer = Timer(mangaTime, manga_timer, args={'chan':chan})
 
 async def alarm_timer(args):
@@ -907,7 +909,7 @@ async def getNewestChapter(mangaID):
 		respo = response.json().get("volumes")
 		vols = list(respo)
 	except:
-		return None
+		return {"errFlag": True}
 	try:
 		chaps = list(respo.get("none").get("chapters").keys())
 		chapID = respo.get("none").get("chapters").get(chaps[0]).get("id")
@@ -918,7 +920,7 @@ async def getNewestChapter(mangaID):
 		request = "https://api.mangadex.org/chapter/" + chapID
 		response = requests.get(request)
 	except:
-		return None
+		return {"errFlag": True}
 	link = response.json().get("data").get("attributes").get("externalUrl")
 	if link is None:
 		link = "https://mangadex.org/chapter/" + chapID
