@@ -624,12 +624,12 @@ async def manga_timer(args):
 	chan = args["chan"]
 	mangaIDs = []
 	# Get list of manga from mangadex custom list
-	#try:
-	response = requests.get("https://api.mangadex.org/list/" + MANGALIST)
-	temp = response.json().get("data").get("relationships")
-	#except:
-	#	m_timer = Timer(mangaTime, manga_timer, args={'chan':chan})
-	#	return
+	try:
+		response = requests.get("https://api.mangadex.org/list/" + MANGALIST)
+		temp = response.json().get("data").get("relationships")
+	except:
+		m_timer = Timer(mangaTime, manga_timer, args={'chan':chan})
+		return
 	for i in temp:
 		if response.json().get("result") == "ok":
 			mangaIDs.append(i.get("id"))
@@ -647,7 +647,9 @@ async def manga_timer(args):
 				if float(newChap) > float(result) and newChap != None:
 					# If manga in database has been updated
 					msgText = await constructMessage(TextEnum.Manga)
-					embed = discord.Embed().set_image(url=info.get("cover"))
+					title = info.get("title") + " Chapter " + info.get("newChap")
+					embed = discord.Embed(title=title, description=info.get("link"))
+					embed.set_image(url=info.get("cover"))
 					await chan.send(msgText.replace("***", info.get("title")).replace("###", newChap), embed=embed)
 					await editManga(i, newChap)
 	m_timer = Timer(mangaTime, manga_timer, args={'chan':chan})
@@ -908,9 +910,19 @@ async def getNewestChapter(mangaID):
 		return None
 	try:
 		chaps = list(respo.get("none").get("chapters").keys())
+		chapID = respo.get("none").get("chapters").get(chaps[0]).get("id")
 	except:
 		chaps = list(respo.get(vols[1]).get("chapters").keys())
-	return {"newChap": chaps[0]}
+		chapID = respo.get("none").get("chapters").get(chaps[0]).get("id")
+	try:
+		request = "https://api.mangadex.org/chapter/" + chapID
+		response = requests.get(request)
+	except:
+		return None
+	link = response.json().get("data").get("attributes").get("externalUrl")
+	if link is None:
+		link = "https://mangadex.org/chapter/" + chapID
+	return {"newChap": chaps[0], "link": link}
 
 async def getMangaInfo(mangaID):
 	try:
