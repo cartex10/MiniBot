@@ -903,7 +903,7 @@ async def getManga():
 async def getNewestChapter(mangaID):
 	try:
 		request = "https://api.mangadex.org/manga/" + mangaID + "/aggregate"
-		response = requests.get(request)
+		response = requests.get(request, params={"translatedLanguage[]":"en"})
 		respo = response.json().get("volumes")
 		vols = list(respo)
 	except:
@@ -913,7 +913,7 @@ async def getNewestChapter(mangaID):
 		chapID = respo.get("none").get("chapters").get(chaps[0]).get("id")
 	except:
 		chaps = list(respo.get(vols[1]).get("chapters").keys())
-		chapID = respo.get("none").get("chapters").get(chaps[0]).get("id")
+		chapID = respo.get(vols[1]).get("chapters").get(chaps[0]).get("id")
 	try:
 		request = "https://api.mangadex.org/chapter/" + chapID
 		response = requests.get(request)
