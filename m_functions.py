@@ -640,9 +640,10 @@ async def manga_timer(args):
 			result = await findManga(i)
 			if result == -1:
 				# If manga is not in database
-				await addManga(i, await getNewestChapter(i))
+				await addManga(i, (await getNewestChapter(i)).get("newChap"))
 			elif not result == "err":
-				newChap = await getNewestChapter(i)
+				info.update(await getNewestChapter(i))
+				newChap = info.get("newChap")
 				if float(newChap) > float(result) and newChap != None:
 					# If manga in database has been updated
 					msgText = await constructMessage(TextEnum.Manga)
@@ -899,7 +900,8 @@ async def getManga():
 
 async def getNewestChapter(mangaID):
 	try:
-		response = requests.get("https://api.mangadex.org/manga/" + mangaID + "/aggregate")
+		request = "https://api.mangadex.org/manga/" + mangaID + "/aggregate"
+		response = requests.get(request)
 		respo = response.json().get("volumes")
 		vols = list(respo)
 	except:
@@ -908,7 +910,7 @@ async def getNewestChapter(mangaID):
 		chaps = list(respo.get("none").get("chapters").keys())
 	except:
 		chaps = list(respo.get(vols[1]).get("chapters").keys())
-	return chaps[0]
+	return {"newChap": chaps[0]}
 
 async def getMangaInfo(mangaID):
 	try:
