@@ -1,9 +1,13 @@
 import discord
 from discord.ext import commands
-import asyncio, sqlite3, random, math, requests, json
+from dotenv import load_dotenv
+import asyncio, sqlite3, random, math, requests, json, os
 from m_vars import *
 import datetime
 from datetime import time, tzinfo, timedelta
+
+load_dotenv()
+MANGALIST = os.getenv('MANGALIST')
 
 # Classes
 class Timer:
@@ -620,12 +624,12 @@ async def manga_timer(args):
 	chan = args["chan"]
 	mangaIDs = []
 	# Get list of manga from mangadex custom list
-	try:
-		response = requests.get("https://api.mangadex.org/list/bd404ab5-d07c-4dfc-b9ba-40e305e7fa47")
-		temp = response.json().get("data").get("relationships")
-	except:
-		m_timer = Timer(mangaTime, manga_timer, args={'chan':chan})
-		return
+	#try:
+	response = requests.get("https://api.mangadex.org/list/" + MANGALIST)
+	temp = response.json().get("data").get("relationships")
+	#except:
+	#	m_timer = Timer(mangaTime, manga_timer, args={'chan':chan})
+	#	return
 	for i in temp:
 		if response.json().get("result") == "ok":
 			mangaIDs.append(i.get("id"))

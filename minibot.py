@@ -3,6 +3,8 @@
 # TODO: ! - priority; * - working on
 #		randomly changing status/presence
 #	!	make high priorities ping user
+#		setup the "Bot Channels" category if it doesn't exist
+#		update manga_timer() to remove manga not in list using removeManga()
 #
 import discord
 from discord.ext import commands
@@ -16,7 +18,7 @@ load_dotenv()
 TOKEN = os.getenv('TOKEN')
 GUILD = int(os.getenv('GUILD'))
 
-base_activity = discord.Activity(type=discord.ActivityType.listening, name="!help")
+base_activity = discord.Activity(type=discord.ActivityType.listening, name="your commands!")
 intents = discord.Intents.all()
 #intents.message_content = True
 #intents.members = True
@@ -37,7 +39,7 @@ async def on_ready():
 		await bot.change_presence(activity=base_activity, status="online")
 		msg = await chan.send("Hello! I'm getting ready to help you out!")
 		
-		# Clean guild
+		# Clean guild and setup necessary bot channels
 		channels = ["menu", "phone-menu", "notifications"]
 		category = discord.utils.get(guild.categories, name="Bot Channels")
 		for chan in channels:
