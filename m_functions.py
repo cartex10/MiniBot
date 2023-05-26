@@ -910,18 +910,22 @@ async def getNewestChapter(mangaID):
 		vols = list(respo)
 	except:
 		return {"errFlag": True}
+		print("ERROR in m_functions.py:getNewestChapter():try:1")
 	try:
 		chaps = list(respo.get("none").get("chapters").keys())
 		chapID = respo.get("none").get("chapters").get(chaps[0]).get("id")
 	except:
-		chaps = list(respo.get(vols[1]).get("chapters").keys())
-		chapID = respo.get(vols[1]).get("chapters").get(chaps[0]).get("id")
+		chaps = list(respo.get(vols[0]).get("chapters").keys())
+		chapID = respo.get(vols[0]).get("chapters").get(chaps[0]).get("id")
+		#print("ERROR in m_functions.py:getNewestChapter():try:2")
+		#print("^^^ planned error: chapID = " + str(chapID))
 	try:
 		request = "https://api.mangadex.org/chapter/" + chapID
 		response = requests.get(request)
+		link = response.json().get("data").get("attributes").get("externalUrl")
 	except:
 		return {"errFlag": True}
-	link = response.json().get("data").get("attributes").get("externalUrl")
+		print("ERROR in m_functions.py:getNewestChapter():try:3")
 	if link is None:
 		link = "https://mangadex.org/chapter/" + chapID
 	return {"newChap": chaps[0], "link": link}
