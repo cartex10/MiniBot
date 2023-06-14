@@ -5,6 +5,8 @@
 #	!	make high priorities ping user
 #		setup the "Bot Channels" category if it doesn't exist
 #		update manga_timer() to remove manga not in list using removeManga()
+#		start work on notes views and functions
+#		separate into different files based on function (alarms, notifs, templates, etc)
 #
 import discord
 from discord.ext import commands

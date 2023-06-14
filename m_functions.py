@@ -946,9 +946,9 @@ async def getMangaInfo(mangaID):
 			try:
 				response = requests.get("https://api.mangadex.org/cover/" + i.get("id"))
 				if resp.json().get("result") != "ok":
-					continue
+					return { "errFlag": errFlag}
 			except:
-				continue
+				return { "errFlag": errFlag}
 			cover += "/" + response.json().get("data").get("attributes").get("fileName")
 			errFlag = False
 			break
