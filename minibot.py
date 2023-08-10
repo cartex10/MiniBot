@@ -7,13 +7,18 @@
 #		update manga_timer() to remove manga not in list using removeManga()
 #		start work on notes views and functions
 #		separate into different files based on function (alarms, notifs, templates, etc)
+#		add templates for good night and good morning
+#		send a few good night and good morning reminders (w/ toggle in settings for each)
+#		give alarms an "acknowledgement" button and delete if pressed, resend after 10 min if not
 #
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 import random, math, time, asyncio, os
-from m_functions import *
-from m_vars import *
+from m_reminders import *
+from m_templates import *
+from m_alarms import *
+from m_manga import *
 
 print("Starting bot with discord.py v" + discord.__version__)
 load_dotenv()
@@ -28,6 +33,7 @@ bot = commands.Bot(command_prefix="!", status="online", activity=base_activity, 
 
 @bot.event																		#called at bot startup
 async def on_ready():
+	global con
 	global on_check
 	global notifyTime
 	global mangaTime
