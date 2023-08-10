@@ -211,8 +211,6 @@ class alarmView(discord.ui.View):
 			self.sort = -1
 		await self.update()
 
-
-
 async def alarm_timer(args):
 	global alarmTimers
 	chan = args["chan"]

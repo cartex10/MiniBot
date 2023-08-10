@@ -136,8 +136,6 @@ class reminderView(discord.ui.View):
 		await interaction.response.edit_message(view=self)
 		await self.update()
 
-
-
 async def notify_timer(args):
 	# Main Notification Function
 	# On Alarm, check if a reminder should be sent
@@ -167,22 +165,6 @@ async def notify_timer(args):
 		await chan.send(await constructRandomReminder(), delete_after=360*5)
 		timeNoLuck = 0
 	n_timer = Timer(notifyTime, notify_timer, args={'chan':chan})
-
-async def constructMessage(msgType):
-	msgText = await getRandomTemplate(msgType.value)
-	if msgText.upper() == msgText:
-		return msgText
-	else:
-		greet = await getRandomTemplate(TextEnum.Greeting.value)
-	if len(msgText) > 1:
-		if msgText[1] == " " or greet == "":
-			msgText = msgText[0].upper() + msgText[1:]
-		else:
-			msgText = msgText[0].lower() + msgText[1:]
-	if greet == "":
-		return msgText
-	else:
-		return greet[0].upper() + greet[1:].lower() + " " + msgText
 
 async def constructRandomReminder():
 	reminders = await getReminders(True)
@@ -224,51 +206,3 @@ async def deleteReminder(title, priority):
 	global con
 	con.execute("DELETE FROM REMINDERS WHERE title=? AND priority=?", (title, priority))
 	con.commit()
-
-async def checkMute():
-	dawn = await getSetting("dawn")
-	dusk = await getSetting("dusk")
-	sleepAtNight = await getSetting("sleepAtNight")
-	if dawn is None or dusk is None or sleepAtNight is None or not sleepAtNight:
-		return False
-	now = datetime.datetime.now()
-	today = datetime.datetime.today()
-	dawn = datetime.datetime.combine(today, strToTime(dawn))
-	dusk = datetime.datetime.combine(today, strToTime(dusk))
-	if (dawn - dusk).total_seconds() > 0:
-		# If dusk is after midnight
-		if dawn.hour > now.hour and dusk.hour < now.hour:
-			return True
-		elif dawn.hour == now.hour and dusk.hour == dawn.hour:
-			if dawn.minute > now.minute and dusk.minute <= now.minute:
-				return True
-			else:
-				return False
-		elif dawn.hour == now.hour:
-			if dawn.minute > now.minute:
-				return True
-			else:
-				return False
-		elif dusk.hour == now.hour:
-			if dusk.minute <= now.minute:
-				return True
-			else:
-				return False
-		else:
-			return False
-	elif (dawn - dusk).total_seconds() < 0:
-		# If dusk is before midnight
-		if dawn.hour > now.hour and dusk.hour > now.hour:
-			return True
-		elif dawn.hour == now.hour:
-			if dawn.minute > now.minute:
-				return True
-			else:
-				return False
-		elif dusk.hour == now.hour:
-			if dusk.minute <= now.minute:
-				return True
-			else:
-				return False
-		else:
-			return False

@@ -219,32 +219,10 @@ class templateView(discord.ui.View):
 			self.sort = -1
 		await self.update()
 
-
-
 async def addTemplate(msgText, msgType, msgWeight):
 	global con
 	con.execute("INSERT INTO MESSAGES VALUES (?, ?, ?)", (msgText, msgType, msgWeight))
 	con.commit()
-
-async def getRandomTemplate(msgType):
-	global con
-	cursor = con.execute("SELECT msgText, msgWeight FROM MESSAGES WHERE msgType=?", (msgType,))
-	msgList = cursor.fetchall()
-	randList = []
-	count = 0
-	for msg in msgList:
-		for i in range(0, msg[1]):
-			randList.append(count)
-		count += 1
-	if len(randList) == 0:
-		return None
-	if msgType == TextEnum.Greeting.value:
-		for i in range(0, 100):
-			randList.append(-1)
-	select = random.choice(randList)
-	if select == -1:
-		return ""
-	return msgList[select][0]
 
 async def getTemplates(msgType):
 	global con
