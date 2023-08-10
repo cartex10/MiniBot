@@ -1,24 +1,15 @@
-# MiniBot v1.3
-#
-# TODO: ! - priority; * - working on
-#		randomly changing status/presence
-#	!	make high priorities ping user
-#		setup the "Bot Channels" category if it doesn't exist
-#		update manga_timer() to remove manga not in list using removeManga()
-#		start work on notes views and functions
-#		separate into different files based on function (alarms, notifs, templates, etc)
-#		add templates for good night and good morning
-#		send a few good night and good morning reminders (w/ toggle in settings for each)
-#		give alarms an "acknowledgement" button and delete if pressed, resend after 10 min if not
-#
+# MiniBot v1.4
+
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 import random, math, time, asyncio, os
+from libm_vars import *
 from m_reminders import *
 from m_templates import *
 from m_alarms import *
 from m_manga import *
+from m_functions import *
 
 print("Starting bot with discord.py v" + discord.__version__)
 load_dotenv()
