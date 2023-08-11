@@ -1,27 +1,18 @@
 import discord
 from discord.ext import commands
 from enum import Enum
-import datetime
+import sqlite3, datetime
 from datetime import time, tzinfo, timedelta
 
-global timeNoLuck
-timeNoLuck = 0
-global on_check
 on_check = False
-global lowerFreq			# Frequency of lower priority reminders 							DEFAULT: lowerFreq = 0.125
-global personalityOverride	# Chance of notifications to be overriden by personality message	DEFAULT: personalityOverride = 0.20
-global maxTimers			# Amount of timers before higher priority reminder 					DEFAULT: maxTimers = 15
-global notifyTime			# Global timer length in seconds 									DEFAULT: notifyTime = 603
-global mangaTime			# Time between manga checks 										DEFAULT: mangaTime = 300
-global con
-global alarmTimers
+con = sqlite3.connect("m_db.db")
+timeNoLuck = 0
+lowerFreq = 0.20	# Frequency of lower priority reminders			DEFAULT: lowerFreq = 0.125
+personalityOverride = 0.2	# Chance of notifications to be overriden by personality message	DEFAULT: personalityOverride = 0.20
+maxTimers = 15		# Amount of timers before higher priority reminder		DEFAULT: maxTimers = 15
+notifyTime = 603	# Global timer length in seconds		DEFAULT: notifyTime = 603
+mangaTime = 300		# Time between manga checks		DEFAULT: mangaTime = 300
 alarmTimers = []
-
-lowerFreq = 0.20
-personalityOverride = 0.125
-maxTimers = 15
-notifyTime = 603
-mangaTime = 300
 
 class TextEnum(Enum):
 	Personality = 0

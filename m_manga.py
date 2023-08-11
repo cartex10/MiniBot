@@ -39,6 +39,7 @@ async def manga_timer(args):
 						title = info.get("title") + " Chapter " + info.get("newChap")
 						embed = discord.Embed(title=title, description=info.get("link"))
 						embed.set_image(url=info.get("cover"))
+						embed.set_thumbnail(url=info.get("cover"))
 						await chan.send(msgText.replace("***", info.get("title")).replace("###", newChap), embed=embed)
 						await editManga(i, newChap)
 	m_timer = Timer(mangaTime, manga_timer, args={'chan':chan})
@@ -106,7 +107,7 @@ async def getNewestChapter(mangaID):
 
 async def getMangaInfo(mangaID):
 	try:
-		resp = requests.get("https://api.mangadex.org/manga/" + mangaID)
+		resp = requests.get("https://api.mangadex.org/manga/" + mangaID + "?includes[]=cover_art")
 		if resp.json().get("result") != "ok":
 			return {"errFlag": True}
 	except:
@@ -117,13 +118,7 @@ async def getMangaInfo(mangaID):
 	errFlag = True
 	for i in respo:
 		if i.get("type") == "cover_art":
-			try:
-				response = requests.get("https://api.mangadex.org/cover/" + i.get("id"))
-				if resp.json().get("result") != "ok":
-					return { "errFlag": errFlag}
-			except:
-				return { "errFlag": errFlag}
-			cover += "/" + response.json().get("data").get("attributes").get("fileName")
+			cover += "/" + i.get("attributes").get("fileName") + ".256.jpg"
 			errFlag = False
 			break
 	return {"title": title, "cover": cover, "errFlag": errFlag}

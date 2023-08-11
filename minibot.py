@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 import random, math, time, asyncio, os
-from libm_vars import *
+from m_vars import *
 from m_reminders import *
 from m_templates import *
 from m_alarms import *
