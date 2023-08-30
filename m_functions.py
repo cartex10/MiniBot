@@ -22,7 +22,7 @@ class Timer:
 
 async def checkConnection(chan):
 	global con
-	con = sqlite3.connect("m_db.db")
+	con = sqlite3.connect("db/m_db.db")
 	msg = await chan.send("```Attempting database connection```")
 	try:
 		cursor = con.execute("SELECT title, priority FROM REMINDERS")

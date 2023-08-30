@@ -1,0 +1,12 @@
+version: "3.7"
+volumes:
+  minibot-db:
+    name: minibot-db
+services:
+  minibot:
+    container_name: minibot
+    image: minibot:latest
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - minibot-db:/db

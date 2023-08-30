@@ -5,7 +5,7 @@ import sqlite3, datetime
 from datetime import time, tzinfo, timedelta
 
 on_check = False
-con = sqlite3.connect("m_db.db")
+con = sqlite3.connect("db/m_db.db")
 timeNoLuck = 0
 lowerFreq = 0.20	# Frequency of lower priority reminders			DEFAULT: lowerFreq = 0.125
 personalityOverride = 0.2	# Chance of notifications to be overriden by personality message	DEFAULT: personalityOverride = 0.20
