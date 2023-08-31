@@ -1,8 +1,12 @@
 import discord
 from discord.ext import commands
 from enum import Enum
-import sqlite3, datetime
+import sqlite3, datetime, os
 from datetime import time, tzinfo, timedelta
+import time
+
+if not os.path.exists("db"):
+    os.makedirs("db")
 
 on_check = False
 con = sqlite3.connect("db/m_db.db")
@@ -13,6 +17,10 @@ maxTimers = 15		# Amount of timers before higher priority reminder		DEFAULT: max
 notifyTime = 603	# Global timer length in seconds		DEFAULT: notifyTime = 603
 mangaTime = 300		# Time between manga checks		DEFAULT: mangaTime = 300
 alarmTimers = []
+
+os.environ['TZ'] = 'America/New_York'
+time.tzset()
+print(time.strftime('%X %x %Z'))
 
 class TextEnum(Enum):
 	Personality = 0
