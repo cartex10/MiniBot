@@ -33,10 +33,6 @@ async def manga_timer(args):
 			elif not result == "err":
 				if not info.get("errFlag"):
 					newChap = info.get("newChap")
-					print("\n\n\n\n\n\n")
-					print(newChap)
-					print(result)
-					print(info)
 					if float(newChap) > float(result) and newChap != None:
 						# If manga in database has been updated
 						msgText = await constructMessage(TextEnum.Manga)

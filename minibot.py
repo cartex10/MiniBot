@@ -3,7 +3,7 @@
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-import random, math, time, asyncio, os
+import random, math, time, asyncio, os, logging
 from m_vars import *
 from m_reminders import *
 from m_templates import *
@@ -13,6 +13,7 @@ from m_functions import *
 
 print("Starting bot with discord.py v" + discord.__version__)
 load_dotenv()
+handler = logging.FileHandler(filename='db/minibot.log', encoding='utf-8', mode='w')
 TOKEN = os.getenv('TOKEN')
 GUILD = int(os.getenv('GUILD'))
 
@@ -189,4 +190,4 @@ async def check_commands(ctx):
 	await bot.tree.sync()
 	return True
 
-bot.run(TOKEN)
+bot.run(TOKEN, log_handler=handler)
