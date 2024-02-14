@@ -118,7 +118,7 @@ async def getMangaInfo(mangaID):
 	errFlag = True
 	for i in respo:
 		if i.get("type") == "cover_art":
-			cover += "/" + i.get("attributes").get("fileName") + ".256.jpg"
+			cover += "/" + i.get("attributes").get("fileName")# + ".256.jpg"
 			errFlag = False
 			break
 	return {"title": title, "cover": cover, "errFlag": errFlag}
